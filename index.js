@@ -11,6 +11,7 @@ const io = new Server(server, {
   },
 });
 
+
 app.use(bodyParser.json({ limit: "2mb" }));
 
 function mean(arr) {
