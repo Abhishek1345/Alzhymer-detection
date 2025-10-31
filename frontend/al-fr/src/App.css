@@ -11,7 +11,7 @@ body {
   align-items: center;
   min-height: 100vh;
   padding: 30px;
-  margin:0 30vw;
+  margin:0 auto;
 }
 
 .header {
