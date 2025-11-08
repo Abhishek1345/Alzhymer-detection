@@ -11,9 +11,7 @@ const io = new Server(server, {
   },
 });
 
-
 app.use(bodyParser.json({ limit: "2mb" }));
-
 function mean(arr) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
@@ -23,13 +21,29 @@ function variance(arr) {
   return arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length;
 }
 
+
+function calculateAlzheimerProbability(accVar, gyroVar) {
+
+  const accScore = Math.min(accVar / 1.0, 1);  
+  const gyroScore = Math.min(gyroVar / 100, 1); 
+
+
+  const weightedScore = 0.6 * accScore + 0.4 * gyroScore;
+
+
+  const probability = Math.round(weightedScore * 100);
+
+  return probability;
+}
+
+
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
-
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
 });
+
 
 app.post("/analyze", (req, res) => {
   try {
@@ -38,31 +52,36 @@ app.post("/analyze", (req, res) => {
     if (!accX || !gyroX) {
       return res.status(400).json({ error: "Missing sensor data" });
     }
-  
+
+
     const accMag = accX.map((v, i) =>
       Math.sqrt(v ** 2 + accY[i] ** 2 + accZ[i] ** 2)
     );
     const gyroMag = gyroX.map((v, i) =>
       Math.sqrt(v ** 2 + gyroY[i] ** 2 + gyroZ[i] ** 2)
     );
+
+
     const accVar = variance(accMag);
     const gyroVar = variance(gyroMag);
-    let result = "Normal";
-    if (accVar > 0.4 || gyroVar > 30) {
-      result = "Alzheimer-likely";
-    }
-   console.log(accVar);
-   console.log(gyroVar);
-   console.log(result);
+
+
+    const probability = calculateAlzheimerProbability(accVar, gyroVar);
+
+    let status = "Normal";
+    if (probability >= 50) status = "Alzheimer-likely";
+    else if (probability >= 30) status = "Slight Risk";
+
     const analysis = {
-      status: result,
+      status,
+      probability: `${probability}%`,
       accVariance: accVar.toFixed(3),
       gyroVariance: gyroVar.toFixed(3),
       timestamp: new Date().toISOString(),
     };
+
+    console.log(analysis);
     io.emit("sensor_update", analysis);
-
-
     res.json(analysis);
   } catch (err) {
     console.error(err);
@@ -70,5 +89,5 @@ app.post("/analyze", (req, res) => {
   }
 });
 
-const PORT = 5000 || process.env.PORT;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
