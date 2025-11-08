@@ -1,24 +1,55 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import './SpeechAnalyzer.css';
 
-const sentences = [
-  'The quick brown fox jumps over the lazy dog.',
-  'Today is a bright and beautiful day.',
-  'She sells seashells by the seashore.',
-  'Technology can improve the quality of life.',
-  'Memory is the diary that we all carry about with us.'
-];
+const sentences = {
+  'en-US': [
+    'The quick brown fox jumps over the lazy dog.',
+    'Today is a bright and beautiful day.',
+    'She sells seashells by the seashore.',
+    'Technology can improve the quality of life.',
+    'Memory is the diary that we all carry about with us.'
+  ],
+  'hi-IN': [
+    'नमस्ते, मेरा नाम राजेश है।',
+    'आज मौसम बहुत अच्छा है।',
+    'मुझे पानी चाहिए।',
+    'मैं बाज़ार जा रहा हूँ।',
+    'मेरा घर बहुत सुंदर है।'
+  ],
+  'bn-IN': [
+    'হ্যালো, আমার নাম রাহুল।',
+    'আজকের দিনটা সুন্দর।',
+    'আমাকে পানি দিতে হবে।',
+    'আমি বাজারে যাচ্ছি।',
+    'আমার বাড়ি খুব সুন্দর।'
+  ],
+  'or-IN': [
+    'ନମସ୍କାର, ମୋର ନାମ ସୁରେଶ।',
+    'ଆଜିର ଦିନଟି ସୁନ୍ଦର।',
+    'ମୋତେ ପାଣି ଦରକାର।',
+    'ମୁଁ ବଜାରକୁ ଯାଉଛି।',
+    'ମୋର ଘର ବହୁତ ସୁନ୍ଦର।'
+  ]
+};
 
 export default function SpeechAnalyzer() {
-  const [currentSentence, setCurrentSentence] = useState(sentences[0]);
+  const [language, setLanguage] = useState('en-US');
+  const [currentSentence, setCurrentSentence] = useState(sentences[language][0]);
   const [transcript, setTranscript] = useState('');
   const [recording, setRecording] = useState(false);
   const [result, setResult] = useState(null);
-  const [attempts, setAttempts] = useState([]); // 🆕 store past attempts
+  const [attempts, setAttempts] = useState([]);
   const recognitionRef = useRef(null);
+
+  // Update sentence when language changes
+  useEffect(() => {
+    setCurrentSentence(sentences[language][0]);
+    setTranscript('');
+    setResult(null);
+  }, [language]);
 
   const startRecording = () => {
     if (!('webkitSpeechRecognition' in window)) {
@@ -27,7 +58,7 @@ export default function SpeechAnalyzer() {
     }
 
     const recognition = new window.webkitSpeechRecognition();
-    recognition.lang = 'en-US';
+    recognition.lang = language;
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -64,15 +95,29 @@ export default function SpeechAnalyzer() {
     const total = refWords.length;
 
     for (let i = 0; i < total; i++) {
-      if (spokenWords[i] && spokenWords[i].replace(/[^a-z]/g, '') === refWords[i].replace(/[^a-z]/g, '')) {
+      if (spokenWords[i] && spokenWords[i].replace(/[^a-z\u0900-\u097F\u0980-\u09FF\u0B00-\u0B7F]/g, '') ===
+          refWords[i].replace(/[^a-z\u0900-\u097F\u0980-\u09FF\u0B00-\u0B7F]/g, '')) {
         correct++;
       }
     }
 
     const accuracy = (correct / total) * 100;
-    const fillerCount = (spoken.match(/\bum\b|\buh\b|\ber\b|\bhmm\b|\blike\b/gi) || []).length;
+
+    // Language-specific filler words
+    const fillerPatterns = {
+      'en-US': /\bum\b|\buh\b|\ber\b|\bhmm\b|\blike\b/gi,
+      'hi-IN': /\bअरे\b|\bउम\b|\bएह\b/gi,
+      'bn-IN': /\bউম\b|\bআহ\b|\bএই\b/gi,
+      'or-IN': /\bଉମ\b|\bଏହ\b/gi
+    };
+
+    const fillerCount = (spoken.match(fillerPatterns[language]) || []).length;
+
     const pronunciationScore = similarity(spoken, ref) * 100;
-    const probability = 100 - Math.max(0, 100 - ((100 - pronunciationScore) * 0.5 + fillerCount * 3 + (100 - accuracy) * 0.5));
+
+    const probability = 100 - Math.max(0,
+      100 - ((100 - pronunciationScore) * 0.5 + fillerCount * 3 + (100 - accuracy) * 0.5)
+    );
 
     const newResult = {
       accuracy: accuracy.toFixed(1),
@@ -83,13 +128,10 @@ export default function SpeechAnalyzer() {
 
     setResult(newResult);
 
-    // 🆕 Add attempt to history
+    // Save attempt
     setAttempts(prev => [
       ...prev,
-      {
-        attempt: prev.length + 1,
-        probability: parseFloat(newResult.probability)
-      }
+      { attempt: prev.length + 1, probability: parseFloat(newResult.probability) }
     ]);
   };
 
@@ -98,6 +140,7 @@ export default function SpeechAnalyzer() {
     const shorter = s1.length > s2.length ? s2 : s1;
     const longerLength = longer.length;
     if (longerLength === 0) return 1.0;
+
     const editDistance = (a, b) => {
       const costs = [];
       for (let i = 0; i <= a.length; i++) {
@@ -115,12 +158,14 @@ export default function SpeechAnalyzer() {
       }
       return costs[b.length];
     };
+
     return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
   };
 
   const nextSentence = () => {
-    const nextIndex = (sentences.indexOf(currentSentence) + 1) % sentences.length;
-    setCurrentSentence(sentences[nextIndex]);
+    const currentSet = sentences[language];
+    const nextIndex = (currentSet.indexOf(currentSentence) + 1) % currentSet.length;
+    setCurrentSentence(currentSet[nextIndex]);
     setTranscript('');
     setResult(null);
   };
@@ -133,6 +178,17 @@ export default function SpeechAnalyzer() {
       </div>
 
       <div className="content">
+        {/* Language Selector */}
+        <div className="card language-card">
+          <h3>Select Language:</h3>
+          <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+            <option value="en-US">English</option>
+            <option value="hi-IN">Hindi</option>
+            <option value="bn-IN">Bengali</option>
+            <option value="or-IN">Odia</option>
+          </select>
+        </div>
+
         <div className="card instruction-card">
           <h2>Step 1: Read this sentence clearly</h2>
           <p className="sentence-display">“{currentSentence}”</p>
@@ -143,15 +199,15 @@ export default function SpeechAnalyzer() {
             <button onClick={nextSentence} className="secondary">➡ Next Sentence</button>
           </div>
         </div>
-{recording && (
-  <div className="recording-indicator">
-    <div className="waveform">
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
-    <p>Listening...</p>
-  </div>
-)}
 
+        {recording && (
+          <div className="recording-indicator">
+            <div className="waveform">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p>Listening...</p>
+          </div>
+        )}
 
         {transcript && (
           <div className="card transcript-card">
