@@ -68,8 +68,8 @@ app.post("/analyze", (req, res) => {
 
     const analysis = {
       status,
-      accVariance: accVar.toFixed(3),
-      gyroVariance: gyroVar.toFixed(3),
+      accVariance: accVar,
+      gyroVariance: gyroVar,
       accPeaks,
       gyroPeaks,
       probability: probability.toFixed(2),
