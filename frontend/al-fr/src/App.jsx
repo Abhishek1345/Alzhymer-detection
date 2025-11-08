@@ -2,11 +2,19 @@
 import SpeechAnalyzer from "./SpeechAnalyzer";
 import SensorMonitor from "./SensorMonitor";
 import "./App.css";
+import logo from './assets/NIT_JSR.png'; 
 
 export default function App() {
   return (
     <div className="main-container">
-      <h1 className="main-title">Alzheimer Detection Dashboard</h1>
+   
+      <header className="page-header">
+        <img src={logo} alt="NIT Jamshedpur Logo" className="logo" width={100}/>
+        <div className="header-text">
+          <h1 className="institute-name">NIT Jamshedpur</h1>
+          <p className="presented-to">Presented to Dr. Basudeba Behera</p>
+        </div>
+      </header>
 
       <div className="dashboard-grid">
         <div className="card">

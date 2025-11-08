@@ -11,7 +11,14 @@ body {
   min-height: 100vh;
   padding: 20px;
 }
-
+.page-header{
+    display: flex;
+    flex-flow: row wrap;
+}
+.header-text{
+    width:fit-content;
+    margin:0 auto;
+}
 .main-title {
   text-align: center;
   color: #2b3a55;
