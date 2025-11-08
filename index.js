@@ -38,7 +38,7 @@ app.post("/analyze", (req, res) => {
     if (!accX || !gyroX) {
       return res.status(400).json({ error: "Missing sensor data" });
     }
-
+  
     const accMag = accX.map((v, i) =>
       Math.sqrt(v ** 2 + accY[i] ** 2 + accZ[i] ** 2)
     );
@@ -51,7 +51,9 @@ app.post("/analyze", (req, res) => {
     if (accVar > 0.4 || gyroVar > 30) {
       result = "Alzheimer-likely";
     }
-
+   console.log(accVar);
+   console.log(gyroVar);
+   console.log(result);
     const analysis = {
       status: result,
       accVariance: accVar.toFixed(3),

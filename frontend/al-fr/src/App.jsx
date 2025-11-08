@@ -1,4 +1,7 @@
 import React, { useState, useRef } from 'react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 import './App.css';
 
 const sentences = [
@@ -14,6 +17,7 @@ export default function App() {
   const [transcript, setTranscript] = useState('');
   const [recording, setRecording] = useState(false);
   const [result, setResult] = useState(null);
+  const [attempts, setAttempts] = useState([]); // 🆕 store past attempts
   const recognitionRef = useRef(null);
 
   const startRecording = () => {
@@ -49,7 +53,6 @@ export default function App() {
     if (recognitionRef.current) recognitionRef.current.stop();
   };
 
-  // Enhanced pronunciation & fluency analyzer
   const analyzeSpeech = (spokenText) => {
     const ref = currentSentence.toLowerCase();
     const spoken = spokenText.toLowerCase();
@@ -58,7 +61,7 @@ export default function App() {
     const spokenWords = spoken.split(' ');
 
     let correct = 0;
-    let total = refWords.length;
+    const total = refWords.length;
 
     for (let i = 0; i < total; i++) {
       if (spokenWords[i] && spokenWords[i].replace(/[^a-z]/g, '') === refWords[i].replace(/[^a-z]/g, '')) {
@@ -68,22 +71,28 @@ export default function App() {
 
     const accuracy = (correct / total) * 100;
     const fillerCount = (spoken.match(/\bum\b|\buh\b|\ber\b|\bhmm\b|\blike\b/gi) || []).length;
-
-    // Pronunciation clarity approximation using string similarity
     const pronunciationScore = similarity(spoken, ref) * 100;
+    const probability = 100 - Math.max(0, 100 - ((100 - pronunciationScore) * 0.5 + fillerCount * 3 + (100 - accuracy) * 0.5));
 
-    // Weighted result for probability estimation
-    const probability = 100-Math.max(0, 100 - ((100 - pronunciationScore) * 0.5 + fillerCount * 3 + (100 - accuracy) * 0.5));
-
-    setResult({
+    const newResult = {
       accuracy: accuracy.toFixed(1),
       fillerCount,
       pronunciationScore: pronunciationScore.toFixed(1),
       probability: probability.toFixed(2)
-    });
+    };
+
+    setResult(newResult);
+
+    // 🆕 Add attempt to history
+    setAttempts(prev => [
+      ...prev,
+      {
+        attempt: prev.length + 1,
+        probability: parseFloat(newResult.probability)
+      }
+    ]);
   };
 
-  // Basic Levenshtein-based similarity
   const similarity = (s1, s2) => {
     const longer = s1.length > s2.length ? s1 : s2;
     const shorter = s1.length > s2.length ? s2 : s1;
@@ -134,6 +143,15 @@ export default function App() {
             <button onClick={nextSentence} className="secondary">➡ Next Sentence</button>
           </div>
         </div>
+{recording && (
+  <div className="recording-indicator">
+    <div className="waveform">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <p>Listening...</p>
+  </div>
+)}
+
 
         {transcript && (
           <div className="card transcript-card">
@@ -151,6 +169,22 @@ export default function App() {
               <p><strong>Filler Words:</strong> {result.fillerCount}</p>
               <p><strong>Estimated Alzheimer Probability:</strong> {result.probability}%</p>
             </div>
+          </div>
+        )}
+
+        {attempts.length > 0 && (
+          <div className="card chart-card">
+            <h3>📈 Alzheimer Probability Over Time</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={attempts}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="attempt" label={{ value: 'Attempt', position: 'insideBottomRight', offset: -5 }} />
+                <YAxis domain={[0, 100]} label={{ value: 'Probability (%)', angle: -90, position: 'insideLeft' }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="probability" stroke="#8e44ad" strokeWidth={2} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         )}
       </div>
