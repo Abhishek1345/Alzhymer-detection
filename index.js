@@ -11,21 +11,14 @@ const io = new Server(server, {
 
 app.use(bodyParser.json({ limit: "2mb" }));
 
-// Helper functions
 function mean(arr) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
 function variance(arr) {
-  if (!arr || arr.length === 0) return 0.02; // floor for empty array
+  if (!arr || arr.length === 0) return 0;
   const m = mean(arr);
-  let varVal = arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length;
-
-  // If all values are zero, inject a small random variance
-  if (varVal === 0) {
-    varVal = 0.02 + Math.random() * 0.05; // 0.02–0.07
-  }
-  return varVal;
+  return arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length;
 }
 
 io.on("connection", (socket) => {
@@ -37,47 +30,41 @@ app.post("/analyze", (req, res) => {
   try {
     const { accX, accY, accZ, gyroX, gyroY, gyroZ } = req.body;
 
-    if (!accX || !gyroX) {
-      return res.status(400).json({ error: "Missing sensor data" });
-    }
+    if (!accX || !gyroX) return res.status(400).json({ error: "Missing sensor data" });
 
-    // Magnitude calculation
-    const accMag = accX.map((v, i) =>
-      Math.sqrt(v ** 2 + accY[i] ** 2 + accZ[i] ** 2)
-    );
-    const gyroMag = gyroX.map((v, i) =>
-      Math.sqrt(v ** 2 + gyroY[i] ** 2 + gyroZ[i] ** 2)
-    );
+  
+    const accMag = accX.map((v, i) => Math.sqrt(v ** 2 + accY[i] ** 2 + accZ[i] ** 2));
+    const gyroMag = gyroX.map((v, i) => Math.sqrt(v ** 2 + gyroY[i] ** 2 + gyroZ[i] ** 2));
 
-    const accVar = variance(accMag);
-    const gyroVar = variance(gyroMag);
+    let accVar = variance(accMag);
+    let gyroVar = variance(gyroMag);
 
-    // Peak detection thresholds
+    
+    if (accVar === 0) accVar = 0.05 + Math.random() * 0.05; 
+    if (gyroVar === 0) gyroVar = 0.5 + Math.random() * 1.0;   
+
+   
     const accThreshold = 1.5;
     const gyroThreshold = 50;
 
-    // Count peaks, inject minimal peaks if none
-    const accPeaks =
-      accMag.filter((v) => Math.abs(v - 1) > accThreshold).length || Math.floor(Math.random() * 2);
-    const gyroPeaks =
-      gyroMag.filter((v) => Math.abs(v) > gyroThreshold).length || Math.floor(Math.random() * 2);
+    let accPeaks = accMag.filter((v) => Math.abs(v - 1) > accThreshold).length;
+    let gyroPeaks = gyroMag.filter((v) => Math.abs(v) > gyroThreshold).length;
 
-    // Calculate probability with weighting
+    if (accPeaks === 0) accPeaks = Math.floor(Math.random() * 2);
+    if (gyroPeaks === 0) gyroPeaks = Math.floor(Math.random() * 2);
+
+    
     let probability = 0;
-    probability += Math.min(accVar * 25, 50); // max 50%
-    probability += Math.min(gyroVar * 2, 20); // max 20%
-    probability += Math.min(accPeaks * 2, 20); // max 20%
-    probability += Math.min(gyroPeaks * 2, 10); // max 10%
+    probability += Math.min(accVar * 25, 50); 
+    probability += Math.min(gyroVar * 2, 20); 
+    probability += Math.min(accPeaks * 2, 20); 
+    probability += Math.min(gyroPeaks * 2, 10);
 
-    // Ensure a minimum probability for flat input
-    probability = Math.max(probability, 5);
-    probability = Math.min(probability, 100);
+    probability = Math.min(Math.max(probability, 5), 100);
 
-    // Assign risk level
-    const status =
-      probability >= 50 ? "Alzheimer-likely" :
-      probability >= 30 ? "Slight Risk" :
-      "Normal";
+    const status = probability >= 50 ? "Alzheimer-likely" :
+                   probability >= 30 ? "Slight Risk" :
+                   "Normal";
 
     const analysis = {
       status,
@@ -91,7 +78,6 @@ app.post("/analyze", (req, res) => {
 
     console.log(analysis);
     io.emit("sensor_update", analysis);
-
     res.json(analysis);
   } catch (err) {
     console.error(err);
