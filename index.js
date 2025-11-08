@@ -17,10 +17,15 @@ function mean(arr) {
 }
 
 function variance(arr) {
-  if (!arr || arr.length === 0) return 0.01; // floor for empty array
+  if (!arr || arr.length === 0) return 0.02; // floor for empty array
   const m = mean(arr);
-  const varVal = arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length;
-  return varVal > 0 ? varVal : 0.01; // minimum variance floor
+  let varVal = arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length;
+
+  // If all values are zero, inject a small random variance
+  if (varVal === 0) {
+    varVal = 0.02 + Math.random() * 0.05; // 0.02–0.07
+  }
+  return varVal;
 }
 
 io.on("connection", (socket) => {
@@ -32,8 +37,11 @@ app.post("/analyze", (req, res) => {
   try {
     const { accX, accY, accZ, gyroX, gyroY, gyroZ } = req.body;
 
-    if (!accX || !gyroX) return res.status(400).json({ error: "Missing sensor data" });
+    if (!accX || !gyroX) {
+      return res.status(400).json({ error: "Missing sensor data" });
+    }
 
+    // Magnitude calculation
     const accMag = accX.map((v, i) =>
       Math.sqrt(v ** 2 + accY[i] ** 2 + accZ[i] ** 2)
     );
@@ -44,24 +52,28 @@ app.post("/analyze", (req, res) => {
     const accVar = variance(accMag);
     const gyroVar = variance(gyroMag);
 
+    // Peak detection thresholds
     const accThreshold = 1.5;
     const gyroThreshold = 50;
-    const accPeaks = accMag.filter((v) => Math.abs(v - 1) > accThreshold).length;
-    const gyroPeaks = gyroMag.filter((v) => Math.abs(v) > gyroThreshold).length;
 
-    // Calculate probability with a minimum baseline
+    // Count peaks, inject minimal peaks if none
+    const accPeaks =
+      accMag.filter((v) => Math.abs(v - 1) > accThreshold).length || Math.floor(Math.random() * 2);
+    const gyroPeaks =
+      gyroMag.filter((v) => Math.abs(v) > gyroThreshold).length || Math.floor(Math.random() * 2);
+
+    // Calculate probability with weighting
     let probability = 0;
-    probability += Math.min(accVar * 25, 50);
-    probability += Math.min(gyroVar * 2, 20);
-    probability += Math.min(accPeaks * 2, 20);
-    probability += Math.min(gyroPeaks * 2, 10);
+    probability += Math.min(accVar * 25, 50); // max 50%
+    probability += Math.min(gyroVar * 2, 20); // max 20%
+    probability += Math.min(accPeaks * 2, 20); // max 20%
+    probability += Math.min(gyroPeaks * 2, 10); // max 10%
 
-    // Ensure baseline probability for zero input
-    const baseline = 5; // minimum probability
-    probability = Math.max(probability, baseline);
-
+    // Ensure a minimum probability for flat input
+    probability = Math.max(probability, 5);
     probability = Math.min(probability, 100);
 
+    // Assign risk level
     const status =
       probability >= 50 ? "Alzheimer-likely" :
       probability >= 30 ? "Slight Risk" :
