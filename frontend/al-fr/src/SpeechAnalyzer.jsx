@@ -13,25 +13,25 @@ const sentences = {
     'Memory is the diary that we all carry about with us.'
   ],
   'hi-IN': [
-    'नमस्ते, मेरा नाम राजेश है।',
-    'आज मौसम बहुत अच्छा है।',
-    'मुझे पानी चाहिए।',
-    'मैं बाज़ार जा रहा हूँ।',
-    'मेरा घर बहुत सुंदर है।'
+    'नमस्ते, मेरा नाम राजेश है',
+    'आज मौसम बहुत अच्छा है',
+    'मुझे पानी चाहिए',
+    'मैं जा रहा हूं',
+    'मेरा घर बहुत सुंदर'
   ],
   'bn-IN': [
-    'হ্যালো, আমার নাম রাহুল।',
-    'আজকের দিনটা সুন্দর।',
-    'আমাকে পানি দিতে হবে।',
-    'আমি বাজারে যাচ্ছি।',
-    'আমার বাড়ি খুব সুন্দর।'
+    'হ্যালো, আমার নাম রাহুল',
+    'আজকের দিনটা সুন্দর',
+    'আমাকে পানি দিতে হবে',
+    'আমি বাজারে যাচ্ছি',
+    'আমার বাড়ি খুব সুন্দর'
   ],
   'or-IN': [
-    'ନମସ୍କାର, ମୋର ନାମ ସୁରେଶ।',
-    'ଆଜିର ଦିନଟି ସୁନ୍ଦର।',
-    'ମୋତେ ପାଣି ଦରକାର।',
-    'ମୁଁ ବଜାରକୁ ଯାଉଛି।',
-    'ମୋର ଘର ବହୁତ ସୁନ୍ଦର।'
+    'ନମସ୍କାର, ମୋର ନାମ ସୁରେଶ',
+    'ଆଜିର ଦିନଟି ସୁନ୍ଦର',
+    'ମୋତେ ପାଣି ଦରକାର',
+    'ମୁଁ ବଜାରକୁ ଯାଉଛି',
+    'ମୋର ଘର ବହୁତ ସୁନ୍ଦର'
   ]
 };
 
@@ -43,6 +43,14 @@ export default function SpeechAnalyzer() {
   const [result, setResult] = useState(null);
   const [attempts, setAttempts] = useState([]);
   const recognitionRef = useRef(null);
+
+  // Map probability → Alzheimer risk level
+  const getRiskLevel = (probability) => {
+    const p = parseFloat(probability);
+    if (p < 30) return 'Normal';
+    else if (p < 50) return 'Slight Risk';
+    else return 'Alzheimer-likely';
+  };
 
   // Update sentence when language changes
   useEffect(() => {
@@ -123,7 +131,8 @@ export default function SpeechAnalyzer() {
       accuracy: accuracy.toFixed(1),
       fillerCount,
       pronunciationScore: pronunciationScore.toFixed(1),
-      probability: probability.toFixed(2)
+      probability: probability.toFixed(2),
+      riskLevel: getRiskLevel(probability)
     };
 
     setResult(newResult);
@@ -178,7 +187,6 @@ export default function SpeechAnalyzer() {
       </div>
 
       <div className="content">
-        {/* Language Selector */}
         <div className="card language-card">
           <h3>Select Language:</h3>
           <select value={language} onChange={(e) => setLanguage(e.target.value)}>
@@ -223,7 +231,7 @@ export default function SpeechAnalyzer() {
               <p><strong>Word Accuracy:</strong> {result.accuracy}%</p>
               <p><strong>Pronunciation Similarity:</strong> {result.pronunciationScore}%</p>
               <p><strong>Filler Words:</strong> {result.fillerCount}</p>
-              <p><strong>Estimated Alzheimer Probability:</strong> {result.probability}%</p>
+              <p><strong>Estimated Alzheimer Probability:</strong> {result.probability}% → <strong>Risk Level:</strong> {result.riskLevel}</p>
             </div>
           </div>
         )}
@@ -238,7 +246,17 @@ export default function SpeechAnalyzer() {
                 <YAxis domain={[0, 100]} label={{ value: 'Probability (%)', angle: -90, position: 'insideLeft' }} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="probability" stroke="#8e44ad" strokeWidth={2} dot={{ r: 4 }} />
+                <Line
+                  type="monotone"
+                  dataKey="probability"
+                  stroke="#8e44ad"
+                  strokeWidth={2}
+                  dot={(props) => {
+                    const { cx, cy, value } = props;
+                    const color = value < 30 ? 'green' : value < 50 ? 'orange' : 'red';
+                    return <circle cx={cx} cy={cy} r={4} fill={color} />;
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
