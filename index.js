@@ -40,8 +40,8 @@ app.post("/analyze", (req, res) => {
     let gyroVar = variance(gyroMag);
 
     
-    if (accVar === 0) accVar = 0.05 + Math.random() * 0.05; 
-    if (gyroVar === 0) gyroVar = 0.5 + Math.random() * 1.0;   
+    if (accVar == 0) accVar = 0.05 + Math.random() * 0.05; 
+    if (gyroVar == 0) gyroVar = 0.5 + Math.random() * 1.0;   
 
    
     const accThreshold = 1.5;
@@ -60,7 +60,7 @@ app.post("/analyze", (req, res) => {
     probability += Math.min(accPeaks * 2, 20); 
     probability += Math.min(gyroPeaks * 2, 10);
 
-    probability = Math.min(Math.max(probability, 5), 100);
+    probability = Math.min(probability, 100);
 
     const status = probability >= 50 ? "Alzheimer-likely" :
                    probability >= 30 ? "Slight Risk" :
