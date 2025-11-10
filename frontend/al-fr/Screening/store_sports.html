@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>👟 Sports Shop — Context Reasoning Test</title>
+<style>
+:root{
+  --bg:#f5faff;--card:#ffffff;--accent:#0ea5e9;--muted:#6b7280;
+  font-family:"Patrick Hand","Comic Sans MS",system-ui;
+}
+body{margin:0;background:linear-gradient(180deg,#f5faff,#e0f2fe);color:#0f172a;}
+.wrap{max-width:900px;margin:20px auto;padding:20px;}
+.panel{background:var(--card);border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+h1{margin:0;font-size:26px;}
+.muted{color:var(--muted);margin-top:4px;font-size:15px;}
+.purpose{background:#f0f9ff;border-left:6px solid var(--accent);padding:12px;border-radius:8px;margin:14px 0;font-size:15px;}
+.story{font-size:16px;line-height:1.6;margin-bottom:14px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;}
+.item{border:2px solid #bae6fd;border-radius:10px;background:#fff;padding:10px;text-align:center;cursor:pointer;transition:.15s;}
+.item:hover{background:#e0f2fe;border-color:#0ea5e9;transform:translateY(-2px);}
+.item.selected{background:#bae6fd;border-color:#0ea5e9;box-shadow:0 4px 10px rgba(14,165,233,0.25);}
+.item .emoji{font-size:36px;}
+.item .price{font-size:13px;color:#475569;margin-top:4px;}
+.controls{display:flex;gap:10px;align-items:center;margin-top:16px;}
+.btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.secondary{background:#f1f5f9;color:var(--accent);}
+.result{display:none;margin-top:14px;padding:14px;border-radius:10px;background:#f0f9ff;border:2px solid #0ea5e9;}
+footer{text-align:center;margin-top:16px;color:#6b7280;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>👟 Sports Shop</h1>
+    <div class="muted">Context Reasoning & Orientation Test</div>
+
+    <div class="purpose">
+      <strong>Purpose of the Scene</strong><br>
+      This scene checks your ability to <b>reason contextually</b> and recognize irrelevant environments.
+      While sports gear is useful, it has nothing to do with your shopping goal today.
+      Alzheimer’s can make it harder to maintain task boundaries — this scene measures if you can stay on track.
+    </div>
+
+    <div class="story">
+      You walk into the Sports Shop. The air smells of rubber and fresh sneakers.
+      The walls are lined with footballs, dumbbells, and shiny bicycles.
+      It all looks interesting — but was anything here on your list today?
+    </div>
+
+    <div class="grid" id="itemsGrid"></div>
+
+    <div class="controls">
+      <button class="btn primary" id="checkoutBtn">🏃 Buy Selected</button>
+      <button class="btn secondary" id="exitBtn">🚪 Exit Store</button>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+
+    <footer>This scene checks reasoning and focus in an unrelated environment.</footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wallet=Number(localStorage.getItem('wallet'))||5000;
+  let cash=Number(localStorage.getItem('cashInHand'))||600;
+
+  const grid=document.getElementById('itemsGrid');
+  const resultBox=document.getElementById('resultBox');
+  const items=[
+    {name:"Football",emoji:"⚽",price:150},
+    {name:"Sneakers",emoji:"👟",price:200},
+    {name:"Tennis Racket",emoji:"🎾",price:180},
+    {name:"Dumbbells",emoji:"🏋️",price:220},
+    {name:"Bicycle Helmet",emoji:"🚴",price:140}
+  ];
+
+  let selected=[];
+  items.forEach((it,i)=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<div class="emoji">${it.emoji}</div><div><b>${it.name}</b></div><div class="price">₹${it.price}</div>`;
+    div.addEventListener('click',()=>{
+      const idx=selected.indexOf(i);
+      if(idx===-1){selected.push(i);div.classList.add('selected');}
+      else{selected.splice(idx,1);div.classList.remove('selected');}
+    });
+    grid.appendChild(div);
+  });
+
+  document.getElementById('checkoutBtn').addEventListener('click',()=>{
+    const chosen=selected.map(i=>items[i]);
+    const total=chosen.reduce((s,x)=>s+x.price,0);
+    if(total>cash){alert("⚠️ Not enough cash. ATM is outside the market.");return;}
+
+    // Buying sports items = strong distraction (−1), resisting = +0.25
+    let score=0;
+    if(chosen.length>0)score=-1; else score=0.25;
+
+    cash-=total;
+    localStorage.setItem('cashInHand',cash);
+
+    const result={
+      store:"sports",
+      chosen:chosen.map(x=>x.name),
+      spent:total,
+      score,
+      cashLeft:cash,
+      walletLeft:wallet,
+      time:new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('store_sports_result',JSON.stringify(result));
+
+    resultBox.style.display='block';
+    resultBox.innerHTML=`
+      <strong>Sports Shop Summary</strong><br>
+      🏀 Items: ${chosen.map(x=>x.name).join(', ')||'None'}<br>
+      💰 Total Spent: ₹${total}<br>
+      🧮 Score Impact: ${score>=0?'+':''}${score}<br><br>
+      ${
+        chosen.length>0
+        ? 'You made an unrelated purchase — poor task reasoning observed.'
+        : 'You explored briefly and left without distraction — good focus.'
+      }
+    `;
+  });
+
+  document.getElementById('exitBtn').addEventListener('click',()=>{
+    const visited=JSON.parse(localStorage.getItem('visitedStores')||'[]');
+    if(!visited.includes('sports'))visited.push('sports');
+    localStorage.setItem('visitedStores',JSON.stringify(visited));
+    window.location.href='market_street.html';
+  });
+})();
+</script>
+</body>
+</html>
+

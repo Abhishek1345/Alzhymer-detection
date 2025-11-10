@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>☕ Café — Impulse Control & Focus Test</title>
+<style>
+:root{
+  --bg:#fff8f3;--card:#ffffff;--accent:#a855f7;--muted:#6b7280;
+  font-family:"Patrick Hand","Comic Sans MS",system-ui;
+}
+body{margin:0;background:linear-gradient(180deg,#fff8f3,#fef2f2);color:#0f172a;}
+.wrap{max-width:900px;margin:20px auto;padding:20px;}
+.panel{background:var(--card);border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+h1{margin:0;font-size:26px;}
+.muted{color:var(--muted);margin-top:4px;font-size:15px;}
+.purpose{background:#fdf4ff;border-left:6px solid var(--accent);padding:12px;border-radius:8px;margin:14px 0;font-size:15px;}
+.story{font-size:16px;line-height:1.6;margin-bottom:14px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;}
+.item{border:2px solid #e5e7eb;border-radius:10px;background:#fff;padding:10px;text-align:center;cursor:pointer;transition:.15s;}
+.item:hover{background:#faf5ff;border-color:#c084fc;transform:translateY(-2px);}
+.item.selected{background:#ede9fe;border-color:var(--accent);box-shadow:0 4px 10px rgba(168,85,247,0.2);}
+.item .emoji{font-size:36px;}
+.item .price{font-size:13px;color:#475569;margin-top:4px;}
+.controls{display:flex;gap:10px;align-items:center;margin-top:16px;}
+.btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.secondary{background:#f1f5f9;color:var(--accent);}
+.result{display:none;margin-top:14px;padding:14px;border-radius:10px;background:#fdf4ff;border:2px solid #a855f7;}
+footer{text-align:center;margin-top:16px;color:#6b7280;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>☕ Café</h1>
+    <div class="muted">Impulse Control & Focus Test</div>
+
+    <div class="purpose">
+      <strong>Purpose of the Scene</strong><br>
+      This optional scene measures <b>impulse control</b> and <b>task focus</b>.
+      You’re surrounded by relaxing smells and tempting food. The goal is to recognize this store is not part of your plan
+      and to decide wisely whether to spend or stay focused on your task.
+    </div>
+
+    <div class="story">
+      You step into the café. The smell of coffee and baked pastries fills the air.  
+      People are chatting softly, and a warm croissant catches your eye.  
+      You recall — this wasn’t part of your shopping list today. What do you want to do?
+    </div>
+
+    <div class="grid" id="itemsGrid"></div>
+
+    <div class="controls">
+      <button class="btn primary" id="checkoutBtn">✅ Buy Selected</button>
+      <button class="btn secondary" id="exitBtn">🚪 Exit Café</button>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+
+    <footer>
+      This scene tests your ability to stay on task and resist irrelevant choices.
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wallet=Number(localStorage.getItem('wallet'))||5000;
+  let cash=Number(localStorage.getItem('cashInHand'))||600;
+
+  const grid=document.getElementById('itemsGrid');
+  const resultBox=document.getElementById('resultBox');
+  const items=[
+    {name:"Coffee",emoji:"☕",price:80},
+    {name:"Croissant",emoji:"🥐",price:60},
+    {name:"Cake Slice",emoji:"🍰",price:90},
+    {name:"Sandwich",emoji:"🥪",price:100}
+  ];
+
+  let selected=[];
+  items.forEach((it,i)=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<div class="emoji">${it.emoji}</div><div><b>${it.name}</b></div><div class="price">₹${it.price}</div>`;
+    div.addEventListener('click',()=>{
+      const idx=selected.indexOf(i);
+      if(idx===-1){selected.push(i);div.classList.add('selected');}
+      else{selected.splice(idx,1);div.classList.remove('selected');}
+    });
+    grid.appendChild(div);
+  });
+
+  document.getElementById('checkoutBtn').addEventListener('click',()=>{
+    const chosen=selected.map(i=>items[i]);
+    const total=chosen.reduce((s,x)=>s+x.price,0);
+    if(total>cash){alert("⚠️ Not enough cash. ATM is outside the market.");return;}
+
+    // score impact: buying here = distraction
+    let score=0;
+    if(chosen.length>0)score=-1;else score=0.25; // bonus if resisted
+    cash-=total;
+    localStorage.setItem('cashInHand',cash);
+
+    const result={
+      store:"cafe",
+      chosen:chosen.map(x=>x.name),
+      spent:total,
+      score,
+      cashLeft:cash,
+      walletLeft:wallet,
+      time:new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('store_cafe_result',JSON.stringify(result));
+
+    resultBox.style.display='block';
+    resultBox.innerHTML=`
+      <strong>Café Visit Summary</strong><br>
+      🧁 Items: ${chosen.map(x=>x.name).join(', ')||'None'}<br>
+      💰 Total Spent: ₹${total}<br>
+      🧮 Score Impact: ${score>=0?'+':''}${score}<br><br>
+      ${
+        chosen.length>0
+        ? 'You decided to make an unplanned purchase. Small impulse detected.'
+        : 'You left the café without buying — good focus and self-control.'
+      }
+    `;
+  });
+
+  document.getElementById('exitBtn').addEventListener('click',()=>{
+    const visited=JSON.parse(localStorage.getItem('visitedStores')||'[]');
+    if(!visited.includes('cafe'))visited.push('cafe');
+    localStorage.setItem('visitedStores',JSON.stringify(visited));
+    window.location.href='market_street.html';
+  });
+})();
+</script>
+</body>
+</html>

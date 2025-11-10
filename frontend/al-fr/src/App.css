@@ -41,6 +41,7 @@ body {
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 35px;
 }
 
 .section-title {
@@ -85,7 +86,11 @@ body {
   font-size: 15px;
   padding: 20px 0;
 }
-
+.nextPage{
+  margin:0 auto;
+  background-color: #2980b9;
+  color:white;
+}
 @media (max-width: 800px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -93,6 +98,6 @@ body {
 
   .card,
   .sensor-card {
-    margin-bottom: 20px;
+    margin-bottom: 35px;
   }
 }

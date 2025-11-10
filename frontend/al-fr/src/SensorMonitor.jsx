@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
 const socket = io("https://alzhymer-detection.onrender.com");
-
+import { saveTestProbability } from "./utils/ProbabilityManager";
 export default function SensorMonitor() {
   const [sensorData, setSensorData] = useState(null);
 
@@ -24,7 +24,7 @@ export default function SensorMonitor() {
     );
 
   const { status, accVariance, gyroVariance,accPeaks,gyroPeaks,probability, timestamp } = sensorData;
-
+   saveTestProbability("sensor", probability);
   return (
     <div className="sensor-card">
       <h2 className="section-title">Live Sensor Data</h2>

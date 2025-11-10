@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Evening Reflection — Delayed Recall & Reasoning</title>
+<style>
+  :root{
+    --bg: linear-gradient(180deg,#f2f7ff 0%, #fff7ec 100%);
+    --card:#ffffff;
+    --accent:#2563eb;
+    --muted:#6b7280;
+    --good:#16a34a;
+    --warn:#f59e0b;
+    --bad:#dc2626;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+  body{margin:0;background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .wrap{width:900px;background:var(--card);border-radius:14px;padding:20px 22px;box-shadow:0 10px 30px rgba(20,30,60,0.08);}
+  header{display:flex;align-items:center;gap:14px;}
+  .logo{width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#fff,#eaf2ff);font-size:30px;}
+  h1{margin:0;font-size:20px;}
+  .purpose{margin-top:10px;background:#f0f7ff;border-left:5px solid var(--accent);padding:12px;border-radius:8px;color:#16325c;}
+  .story{margin-top:12px;color:#0f1724;}
+  .card{margin-top:16px;padding:16px;border-radius:10px;background:#fbfdff;border:1px solid #eef6ff;}
+  .progress{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .qcount{font-weight:700;color:#0f1724;}
+  .question{font-size:18px;margin:12px 0 8px 0;color:#0b1220;}
+  .options{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+  .opt{padding:12px;border-radius:10px;border:1px solid #e6eefc;background:#fff;cursor:pointer;display:flex;gap:10px;align-items:center;}
+  .opt.selected{background:linear-gradient(180deg,#eaf2ff,#f5fbff);border-color:var(--accent);box-shadow:0 8px 18px rgba(37,99,235,0.08);}
+  .controls{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+  .btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;}
+  .btn.primary{background:var(--accent);color:#fff;}
+  .btn.ghost{background:#f1f5f9;color:var(--accent);border:1px solid rgba(37,99,235,0.08);}
+  .results{margin-top:18px;display:none;}
+  .report{margin-top:12px;padding:14px;border-radius:10px;background:#fffef6;border:1px solid #f3e8d7;}
+  .scoreBig{font-size:32px;font-weight:800;color:#0f1724;}
+  .breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;}
+  .brick{padding:12px;border-radius:8px;background:#fff;border:1px solid #eef2ff;text-align:center;}
+  .footer{margin-top:16px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;}
+  .danger{color:var(--bad);font-weight:700;}
+  .good{color:var(--good);font-weight:700;}
+  .download{background:#111827;color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none;}
+  .small{font-size:13px;color:var(--muted);}
+  .note{margin-top:8px;color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+  <div class="wrap" role="main" aria-labelledby="title">
+    <header>
+      <div class="logo" aria-hidden="true">🕯️</div>
+      <div>
+        <h1 id="title">Evening Reflection — Memory & Reasoning Review</h1>
+        <div class="small">15 choice questions — one at a time. Your answers create a final report.</div>
+      </div>
+    </header>
+
+    <div class="purpose">
+      <strong>Purpose:</strong> This test measures delayed recall (what you remember from earlier today), contextual reasoning (did events make sense together?) and temporal orientation (what time of day is it). These abilities are often affected in early cognitive decline.
+    </div>
+
+    <p class="story">You sit quietly and think back over your day. Answer each question based on what you remember. Take your time — there’s no pressure.</p>
+
+    <div class="card" id="card">
+      <div class="progress">
+        <div class="qcount" id="qcount">Question 1 / 15</div>
+        <div class="small" id="timerText">Time: 0s</div>
+      </div>
+
+      <div class="question" id="question">Loading question…</div>
+
+      <div class="options" id="options"></div>
+
+      <div class="controls">
+        <button id="prevBtn" class="btn ghost" disabled>◀ Previous</button>
+        <button id="nextBtn" class="btn primary" disabled>Next ▶</button>
+      </div>
+
+      <div class="results" id="results"></div>
+    </div>
+
+    <div class="footer">
+      <div class="small">Data is stored locally. This tool is not a clinical diagnosis.</div>
+      <div>
+        <a id="downloadBtn" class="download" style="display:none">Download Report</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+  
+(function(){
+
+/* ---------- 1) Load prior data from localStorage (if present) ---------- */
+function loadKey(keys){
+  for(const k of keys){
+    try{
+      const raw = localStorage.getItem(k);
+      if(!raw) continue;
+      return JSON.parse(raw);
+    } catch(e){ continue; }
+  }
+  return null;
+}
+
+const newspaper = loadKey(['newspaper_scene','morning_newspaper','newspaper_scene_v1']);
+const shoppingData = loadKey(['shopping_list','shopping_list_memorization','shopping_list_result']);
+const market = loadKey(['market_decision_test_v4','market_decision_test_v3','market_result']);
+const morningSeq = loadKey(['morning_light_result','morning_light','morning_sequence','morning_routine_result']);
+const outfit = loadKey(['getting_ready_scene','outfit_scene','getting_ready_result']);
+const groceryRes = loadKey(['store_grocery_result','grocery_result']);
+/* you may have saved other store results under different keys; script is tolerant */
+
+/* ---------- 2) Questions array (15). Some answers are dynamic if prior data exists ---------- */
+const questions = [
+  {id:1, q:"What time did your morning clock show when you woke up?", 
+    opts: ["Around 6 AM","Around 7:30 AM","Around 9 AM","I don’t remember"],
+    correct: ()=>{
+      // prefer morningSeq info if available
+      if(morningSeq && morningSeq.firstChoiceMs!==undefined) return  "Around 7:30 AM";
+      return "Around 7:30 AM";
+    },
+    cat:"orientation"
+  },
+  {id:2, q:"What was the first thing you did after waking up?",
+    opts:["Opened the curtains","Looked for dinner leftovers","Went back to sleep","Checked your phone"],
+    correct: ()=> "Opened the curtains",
+    cat:"reasoning"
+  },
+  {id:3, q:"What did the newspaper say about today’s weather?",
+    opts:["Heavy rain expected","Light rain expected in the evening","Hot and sunny all day","I don’t remember"],
+    correct: ()=> (newspaper && newspaper.info && newspaper.info.weather) ? newspaper.info.weather : "Light rain expected in the evening",
+    cat:"memory"
+  },
+  {id:4, q:"Which item was advertised on sale in the paper?",
+    opts:["Bananas","Apples","Bread","Coffee"],
+    correct: ()=> (newspaper && newspaper.info && newspaper.info.ad) ? (newspaper.info.ad.includes("apple") ? "Apples" : "Apples") : "Apples",
+    cat:"memory"
+  },
+  {id:5, q:"Which of these was on your shopping list?",
+    opts:["Shampoo","Headphones","Chocolate","Scarf"],
+    correct: ()=>{
+      if(shoppingData && shoppingData.items) return shoppingData.items.includes("Shampoo") ? "Shampoo" : "Shampoo";
+      return "Shampoo";
+    },
+    cat:"memory"
+  },
+  {id:6, q:"What did you wear to go outside?",
+    opts:["T-shirt and shorts","Jacket and scarf","Formal suit","I don’t remember"],
+    correct: ()=>{
+      if(outfit && outfit.chosenItems) {
+        const chosen = outfit.chosenItems.join(" ");
+        if(chosen.includes("tshirt")||chosen.includes("shorts")) return "T-shirt and shorts";
+        if(chosen.includes("jacket")||chosen.includes("scarf")) return "Jacket and scarf";
+      }
+      return "T-shirt and shorts";
+    },
+    cat:"memory"
+  },
+  {id:7, q:"Did you remember to take an umbrella?",
+    opts:["Yes, I did","No, I forgot","I didn’t think it was needed","I don’t remember"],
+    correct: ()=>{
+      // use outfit/memory presence to expect yes/no
+      if(outfit && outfit.selected){
+        if(outfit.selected.includes("umbrella") || (outfit && outfit.memoryScore>0)) return "Yes, I did";
+      }
+      if(shoppingData && shoppingData.items && shoppingData.items.includes("Umbrella")) return "Yes, I did";
+      return "No, I forgot";
+    },
+    cat:"memory"
+  },
+  {id:8, q:"Who messaged you before leaving?",
+    opts:["A friend named John","Your daughter","Your boss","Nobody"],
+    correct: ()=> "A friend named John",
+    cat:"reasoning"
+  },
+  {id:9, q:"What did John ask you to buy?",
+    opts:["Chocolate and juice","Orange juice and soap","Flowers and milk","I don’t remember"],
+    correct: ()=> {
+      if(newspaper && newspaper.info && newspaper.info.distraction) {
+        // not likely here
+      }
+      // earlier examples used: Orange juice and soap
+      return "Orange juice and soap";
+    },
+    cat:"memory"
+  },
+  {id:10, q:"How much money did you plan to spend today?",
+    opts:["₹300","₹600","₹1,000","I don’t remember"],
+    correct: ()=> {
+      if(market && market.budget) return "₹" + (market.budget);
+      if(shoppingData && shoppingData.budget) return "₹" + shoppingData.budget;
+      return "₹600";
+    },
+    cat:"reasoning"
+  },
+  {id:11, q:"Which of these stores did you visit today?",
+    opts:["Grocery & Pharmacy","Bookstore & Café","Pharmacy & Sports Shop","I don’t remember"],
+    correct: ()=> {
+      // assume grocery & pharmacy are main
+      return "Grocery & Pharmacy";
+    },
+    cat:"memory"
+  },
+  {id:12, q:"Did you buy all the items from your list?",
+    opts:["Yes, all","Most of them","Only a few","I forgot most of them"],
+    correct: ()=> {
+      if(market && market.score !== undefined) {
+        // approximate expectation: if market recorded many correct, interpret
+        if(market.score >= 7) return "Yes, all";
+        if(market.score >= 4) return "Most of them";
+        return "Only a few";
+      }
+      return "Most of them";
+    },
+    cat:"memory"
+  },
+  {id:13, q:"Did you buy the items John requested?",
+    opts:["Yes, and I gave them to him","Yes, but forgot to give them","No, I forgot to buy them","I don’t remember"],
+    correct: ()=> {
+      if(market && market.itemsChosen) {
+        const chosen = market.itemsChosen || [];
+        if(chosen.includes("Orange Juice") || chosen.includes("Soap") || chosen.includes("Orange juice")) {
+          // whether he gave them we won't know; prompt "Yes, but forgot to give them" as safe default
+          return "Yes, and I gave them to him";
+        }
+      }
+      return "No, I forgot to buy them";
+    },
+    cat:"memory"
+  },
+  {id:14, q:"What did you do after coming home?",
+    opts:["Cooked dinner","Reviewed what I bought","Went straight to bed","I don’t remember"],
+    correct: ()=> "Reviewed what I bought",
+    cat:"reasoning"
+  },
+  {id:15, q:"What time of day is it now?",
+    opts:["Morning","Afternoon","Evening","I don’t know"],
+    correct: ()=> "Evening",
+    cat:"orientation"
+  }
+];
+
+/* ---------- 3) UI state ---------- */
+let current = 0;
+const total = questions.length;
+const answers = new Array(total).fill(null);
+const timestamps = new Array(total).fill(null);
+let qStart = Date.now();
+const qcountEl = document.getElementById('qcount');
+const timerText = document.getElementById('timerText');
+const questionEl = document.getElementById('question');
+const optionsEl = document.getElementById('options');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const resultsEl = document.getElementById('results');
+
+let questionTimerInterval = setInterval(()=> {
+  timerText.textContent = 'Time: ' + Math.round((Date.now() - qStart)/1000) + 's';
+}, 600);
+
+/* ---------- 4) Helpers ---------- */
+function normalize(str){ return (''+str).toLowerCase().replace(/\s+/g,' ').trim(); }
+
+function renderQuestion(index){
+  current = index;
+  qcountEl.textContent = `Question ${current+1} / ${total}`;
+  const q = questions[current];
+  // get correct for debugging if needed: const c = (typeof q.correct === 'function')? q.correct() : q.correct;
+  questionEl.textContent = q.q;
+  optionsEl.innerHTML = '';
+  q.opts.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.type='button';
+    btn.className='opt';
+    btn.textContent = opt;
+    btn.onclick = ()=> {
+      // select
+      for(const c of optionsEl.children) c.classList.remove('selected');
+      btn.classList.add('selected');
+      answers[current] = opt;
+      timestamps[current] = Date.now();
+      nextBtn.disabled = false;
+    };
+    optionsEl.appendChild(btn);
+  });
+  // pre-select if previously answered
+  if(answers[current]){
+    for(const c of optionsEl.children){
+      if(c.textContent === answers[current]) c.classList.add('selected');
+    }
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.disabled = true;
+  }
+  prevBtn.disabled = (current === 0);
+  qStart = Date.now();
+  timerText.textContent = 'Time: 0s';
+}
+
+/* ---------- 5) Navigation ---------- */
+prevBtn.addEventListener('click', ()=>{
+  if(current>0) renderQuestion(current-1);
+});
+nextBtn.addEventListener('click', ()=>{
+  // save time spent for this question if not set
+  if(!timestamps[current]) timestamps[current] = Date.now();
+  if(current < total-1){
+    renderQuestion(current+1);
+  } else {
+    finishTest();
+  }
+});
+
+/* ---------- 6) Scoring ---------- */
+function scoreAnswers(){
+  // weights per category
+  const weights = {memory:1.0, reasoning:0.8, orientation:0.6};
+  let raw = {memory:0, reasoning:0, orientation:0};
+  let max = {memory:0, reasoning:0, orientation:0};
+
+  for(let i=0;i<total;i++){
+    const q = questions[i];
+    const cat = q.cat || 'memory';
+    max[cat] += 1;
+    const given = answers[i];
+    if(!given) continue;
+    const expected = (typeof q.correct === 'function')? q.correct() : q.correct;
+    // compare normalized strings; allow partial matches for "Most" type answers
+    const g = normalize(given);
+    const e = normalize(expected);
+    let point = 0;
+    if(e === g) point = 1;
+    else {
+      // fuzzy check for "Most of them" vs market.score etc.
+      if(g.includes('most') && (e.includes('yes')||e.includes('all')||e.includes('most'))) point = 0.8;
+    }
+    raw[cat] += point;
+  }
+
+  // convert to scores 0-10 using weights and normalization
+  const memScore = (raw.memory / Math.max(1, max.memory)) * 10;
+  const reaScore = (raw.reasoning / Math.max(1, max.reasoning)) * 10;
+  const oriScore = (raw.orientation / Math.max(1, max.orientation)) * 10;
+
+  // combine with weighting
+  const overall = Math.round(((memScore*0.5) + (reaScore*0.3) + (oriScore*0.2)) * 10) / 10;
+
+  return {
+    raw, max,
+    memScore: Math.round(memScore*10)/10,
+    reaScore: Math.round(reaScore*10)/10,
+    oriScore: Math.round(oriScore*10)/10,
+    overall
+  };
+}
+
+
+function finishTest(){
+
+  prevBtn.disabled = true; nextBtn.disabled = true;
+  clearInterval(questionTimerInterval);
+
+  const sc = scoreAnswers();
+
+  let consistencyNotes = [];
+  const q7Ans = answers[6] || '';
+  if(newspaper && newspaper.info && newspaper.info.weather && newspaper.info.weather.toLowerCase().includes('rain')){
+    if(!q7Ans.toLowerCase().includes('yes')) consistencyNotes.push("You didn't report taking an umbrella even though the newspaper predicted rain.");
+  }
+  const report = {
+    timestamp: new Date().toLocaleString(),
+    answers,
+    durations: timestamps.map((t,i)=> t? Math.round((t - (i===0?0: (timestamps[i-1]||t)))/1000): null),
+    scoring: sc,
+    priorData: {newspaper, shoppingData, market, morningSeq, outfit, groceryRes},
+    consistencyNotes
+  };
+
+  localStorage.setItem('evening_reflection', JSON.stringify(report));
+
+ 
+  showResults(report);
+}
+
+function showResults(report){
+  const sc = report.scoring;
+  let alzProb = Math.round(Math.max(0, Math.min(100, 100 - sc.overall * 10)));
+  alzProb/=2;
+  localStorage.setItem('evening_reflection_prob', JSON.stringify(alzProb));
+
+  const probs = [];
+  const keys = ['speech_prob', 'sensor_prob', 'evening_reflection_prob'];
+  keys.forEach(k => {
+    const val = localStorage.getItem(k);
+    if (val !== null) probs.push(parseFloat(val));
+  });
+
+  const overallProb = probs.length > 0
+    ? Math.round(probs.reduce((a, b) => a + b, 0) / probs.length)
+    : null;
+
+  const container = resultsEl;
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="report">
+      <div style="display:flex;align-items:center;gap:18px;justify-content:space-between">
+        <div>
+          <div class="small">Final report generated</div>
+          <div class="scoreBig">${sc.overall} / 10</div>
+          <div class="small">Memory ${sc.memScore}/10 • Reasoning ${sc.reaScore}/10 • Orientation ${sc.oriScore}/10</div>
+        </div>
+        <div style="text-align:right">
+          <div class="small">Completed at</div>
+          <div>${report.timestamp}</div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; padding:10px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+        <div><strong>Estimated Alzheimer's Probability (This Test):</strong>
+          <span style="font-size:20px; font-weight:700; color:${alzProb<30?'var(--good)':(alzProb<60?'var(--warn)':'var(--bad)')}">
+            ${alzProb}%
+          </span>
+          <br>
+          <i><span>If the Alzheimer's Probability given by all three tests exceed 35% then we recommend seeing a doctor</span></i>
+        </div>
+
+      
+      </div>
+
+      <div class="breakdown">
+        <div class="brick">
+          <div style="font-weight:700">Memory</div>
+          <div style="font-size:22px;color:${sc.memScore>=8? 'var(--good)': (sc.memScore>=5? 'var(--warn)':'var(--bad)')}">${sc.memScore}/10</div>
+          <div class="small">Delayed recall & list retention</div>
+        </div>
+        <div class="brick">
+          <div style="font-weight:700">Reasoning</div>
+          <div style="font-size:22px;color:${sc.reaScore>=8? 'var(--good)': (sc.reaScore>=5? 'var(--warn)':'var(--bad)')}">${sc.reaScore}/10</div>
+          <div class="small">Contextual & decision logic</div>
+        </div>
+        <div class="brick">
+          <div style="font-weight:700">Orientation</div>
+          <div style="font-size:22px;color:${sc.oriScore>=8? 'var(--good)': (sc.oriScore>=5? 'var(--warn)':'var(--bad)')}">${sc.oriScore}/10</div>
+          <div class="small">Temporal awareness</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <strong>Detailed conclusions</strong>
+        <p class="small" style="margin-top:6px;color:#14325a">
+          ${generateConclusion(sc, report)}
+        </p>
+      </div>
+
+      <div style="margin-top:12px;">
+        <strong>Brain Functions Tested</strong>
+        <ul class="small">
+          <li><strong>Hippocampus:</strong> short-term & delayed memory.</li>
+          <li><strong>Prefrontal Cortex:</strong> reasoning & planning.</li>
+          <li><strong>Temporal regions:</strong> orientation & time awareness.</li>
+        </ul>
+        <div class="note"><strong>Note:</strong> These estimates are educational only, not a diagnosis.</div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end;">
+        <button id="retestBtn" class="btn ghost">🔁 Retest</button>
+        <button id="finishBtn" class="btn primary">🏁 Finish</button>
+        <a id="downloadLink" class="download" style="display:inline-block;margin-left:8px">Download JSON</a>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('retestBtn').onclick = ()=> {
+    localStorage.removeItem('evening_reflection');
+    window.location.reload();
+  };
+  document.getElementById('finishBtn').onclick = ()=> {
+    showSummaryPage(report);
+  };
+  document.getElementById('downloadLink').onclick = (e)=>{
+    const blob = new Blob([JSON.stringify(report, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    e.target.href = url;
+    e.target.download = 'evening_reflection_report.json';
+    setTimeout(()=> URL.revokeObjectURL(url), 10000);
+  };
+
+  if (overallProb !== null) {
+    setTimeout(() => {
+      ['speech_prob', 'sensor_prob', 'evening_reflection_prob'].forEach(k =>
+        localStorage.removeItem(k)
+      );
+    }, 2000);
+  }
+}
+function generateConclusion(sc, report){
+  const overall = sc.overall;
+  let lines = [];
+  if(overall >= 8){
+    lines.push("Overall performance is strong. The participant recalled most details correctly and linked them logically. This pattern suggests intact episodic memory and reasoning for everyday events.");
+  } else if(overall >= 5){
+    lines.push("Performance is mixed. Some details were remembered well while others were missed or inconsistent. This is consistent with mild, age-related memory variability; monitor for any decline over time.");
+  } else {
+    lines.push("Performance indicates difficulties with delayed recall and/or contextual reasoning. These patterns can be seen in mild cognitive impairment or early Alzheimer’s disease, but they are not a diagnosis.");
+  }
+
+  // mention specific flags
+  if(report.consistencyNotes && report.consistencyNotes.length){
+    lines.push("Flags noted: " + report.consistencyNotes.join(" "));
+  }
+  if(market && market.score !== undefined){
+    lines.push(`Shopping test: earlier market score was ${market.score} / 10 (if available).`);
+  }
+  // risk phrasing
+  if(overall < 5){
+    lines.push("Recommended: consider discussing these results with a clinician for formal cognitive assessment. Early evaluation is helpful if there are functional concerns.");
+  } else {
+    lines.push("If these results are unexpected, consider repeating the full assessment in a few weeks or discussing with a clinician for reassurance.");
+  }
+
+  return lines.join(" ");
+}
+
+/* ---------- 10) Show summary page (detailed) ---------- */
+function showSummaryPage(report){
+  // replace main card with a full summary (keeps the page single-file)
+  const wrap = document.querySelector('.wrap');
+  wrap.innerHTML = `
+    <header style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+      <div style="width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#fff,#eaf2ff);font-size:28px">📋</div>
+      <div>
+        <h1 style="margin:0;font-size:20px">Summary Report — Your Day</h1>
+        <div class="small">Comprehensive results and interpretation</div>
+      </div>
+    </header>
+    <div style="padding:12px;background:#fff;border-radius:8px;border:1px solid #eef6ff">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:14px;color:#6b7280">Completed at</div>
+          <div style="font-weight:800">${report.timestamp}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;color:#6b7280">Overall score</div>
+          <div style="font-weight:900;font-size:28px">${report.scoring.overall} / 10</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>Detailed Scores</strong>
+        <ul style="margin-top:8px">
+          <li>Memory: ${report.scoring.memScore} / 10</li>
+          <li>Reasoning: ${report.scoring.reaScore} / 10</li>
+          <li>Orientation: ${report.scoring.oriScore} / 10</li>
+        </ul>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>What these results test (brain systems)</strong>
+        <ul>
+          <li><strong>Hippocampus:</strong> forming and retaining new episodic memories (shopping list, headlines).</li>
+          <li><strong>Prefrontal Cortex:</strong> planning and decision-making (outfit, purchases).</li>
+          <li><strong>Parietal/Temporal networks:</strong> spatial/temporal awareness and linking events.</li>
+        </ul>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>Detailed conclusions & next steps</strong>
+        <p class="small">${generateConclusion(report.scoring, report)}</p>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button id="retakeAll" class="btn ghost">Retake All Tests</button>
+        <a id="downloadFull" class="download">Download Full JSON</a>
+      </div>
+
+      <div class="note" style="margin-top:10px">
+        <strong>Important:</strong> This tool is a screening-style interactive experience. It is <em>not</em> a medical diagnosis. If you have concerns about memory or function, please consult a qualified clinician.
+      </div>
+    </div>
+  `;
+
+  document.getElementById('downloadFull').onclick = (e) => {
+    const blob = new Blob([JSON.stringify(report, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    e.target.href = url;
+    e.target.download = 'evening_reflection_full_report.json';
+    setTimeout(()=> URL.revokeObjectURL(url), 10000);
+  };
+  document.getElementById('retakeAll').onclick = ()=>{
+    // Optionally clear all tests and reload (user asked for retest earlier).
+    if(confirm("This will clear saved test results so you can retake. Continue?")){
+      // do not remove personal persistent settings; only test data keys
+      const keys = ['evening_reflection','shopping_list','market_decision_test_v4','getting_ready_scene','newspaper_scene','morning_light_result','store_grocery_result'];
+      keys.forEach(k=>localStorage.removeItem(k));
+      window.location.reload();
+    }
+  };
+}
+
+renderQuestion(0);
+
+})(); // IIFE end
+</script>
+</body>
+</html>

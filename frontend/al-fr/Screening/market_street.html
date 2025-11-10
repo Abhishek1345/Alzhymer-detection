@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Market Street — Planning & Memory Hub</title>
+<style>
+:root{
+  --bg:#e8f2ff;--card:#ffffff;--accent:#2563eb;--muted:#6b7280;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+}
+body{margin:0;background:linear-gradient(180deg,#e8f2ff,#f9fbff);color:#0f172a;transition:opacity 1s ease;}
+.wrap{max-width:1100px;margin:20px auto;padding:18px;}
+header{display:flex;align-items:center;gap:10px;}
+header .logo{font-size:42px;}
+h1{margin:0;font-size:24px;}
+.muted{color:var(--muted);margin-top:4px;font-size:15px;}
+.panel{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 20px rgba(10,20,40,0.05);}
+.topbar{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;}
+.infoCard{background:var(--card);border-radius:10px;padding:12px;box-shadow:0 4px 14px rgba(0,0,0,0.06);}
+.btn{padding:8px 12px;border-radius:8px;font-weight:bold;border:none;cursor:pointer;}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.ghost{background:#f1f5f9;color:var(--accent);border:1px solid #dbeafe;}
+.storeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px;}
+.store{background:#fff;border-radius:10px;text-align:center;padding:12px;border:1px solid #e6eefb;cursor:pointer;transition:.15s;}
+.store:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+.store.visited{opacity:0.6;position:relative;}
+.store.visited::after{content:"✓ Visited";position:absolute;top:6px;right:6px;background:#16a34a;color:#fff;font-size:12px;padding:2px 6px;border-radius:6px;}
+.store .emoji{font-size:36px;}
+.small{font-size:13px;color:var(--muted);}
+.layout{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-top:14px;}
+.modal,.popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:50;}
+.modal .card,.popup .card{background:#fff;padding:18px;border-radius:12px;max-width:400px;width:90%;}
+footer{margin-top:20px;text-align:center;color:var(--muted);font-size:13px;}
+@media(max-width:880px){.layout{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🏙️</div>
+    <div>
+      <h1>Market Street — Planning & Orientation Hub</h1>
+      <div class="muted">Test of real-life memory, planning & financial reasoning</div>
+    </div>
+  </header>
+
+  <div class="topbar">
+    <div class="infoCard">
+      <b>💼 Wallet:</b> ₹<span id="walletVal">5000</span><br>
+      <b>💸 Cash in Hand:</b> ₹<span id="cashVal">600</span><br>
+      <span class="small">🏧 ATM Available in Market</span>
+    </div>
+    <div class="infoCard">
+      <b>ATM Machine</b><br>
+      <div class="small">Withdraw if needed (affects judgment score)</div>
+      <div style="margin-top:6px;">
+        <button class="btn ghost" id="atm200">Withdraw ₹200</button>
+        <button class="btn ghost" id="atm500">Withdraw ₹500</button>
+      </div>
+    </div>
+    <div class="infoCard">
+      <b>Memory Aids</b><br>
+      <button class="btn ghost" id="viewListBtn">🧾 View Shopping List</button>
+      <button class="btn ghost" id="viewMsgBtn">📩 View John’s Message</button><br>
+      <div class="small">List views: <span id="listViews">0</span> • ATM uses: <span id="atmUses">0</span></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px;">
+    <strong>Purpose of This Hub</strong>
+    <p class="small" style="margin-top:6px;">
+      This stage assesses <b>executive function</b>, <b>planning</b>, <b>financial reasoning</b>, and <b>memory retrieval</b> before entering the stores.
+      Players must recall their 10 shopping items, plan their store visits, and manage cash carefully.  
+      Using the ATM or viewing the list reduces score slightly — representing reliance on external aids.
+    </p>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <h3 style="margin-top:0;">Stores to Visit</h3>
+      <p class="small">Four of these stores contain your required items. Choose wisely.</p>
+
+      <div class="storeGrid" id="storeGrid">
+        <div class="store" data-id="grocery"><div class="emoji">🥦</div>Grocery Store</div>
+        <div class="store" data-id="pharmacy"><div class="emoji">💊</div>Pharmacy</div>
+        <div class="store" data-id="general"><div class="emoji">🛍️</div>General Store</div>
+        <div class="store" data-id="stationery"><div class="emoji">✏️</div>Stationery Store</div>
+        <div class="store" data-id="cafe"><div class="emoji">☕</div>Café</div>
+        <div class="store" data-id="book"><div class="emoji">📚</div>Bookstore</div>
+        <div class="store" data-id="sports"><div class="emoji">👟</div>Sports Shop</div>
+        <div class="store" data-id="flower"><div class="emoji">💐</div>Flower Shop</div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="btn primary" id="goHomeBtn" disabled>🏠 Go Home</button>
+        <span class="small" style="margin-left:10px;">Visited: <span id="visitedCount">0</span>/8</span>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <h3>📱 John’s Message</h3>
+      <div id="johnStatus" class="small" style="background:#f9fafb;padding:8px;border-radius:8px;">
+        No action taken yet.
+      </div>
+      <h3 style="margin-top:16px;">🧾 Shopping List Reminder</h3>
+      <div class="small">Use only if needed — each view lowers memory score.</div>
+      <div style="margin-top:10px;">
+        <b>Wallet:</b> ₹<span id="sideWallet">5000</span><br>
+        <b>Cash:</b> ₹<span id="sideCash">600</span><br>
+        <b>List Views:</b> <span id="sideViews">0</span>
+      </div>
+    </aside>
+  </div>
+
+  <footer>Plan your route and manage cash wisely — every decision affects your cognitive score.</footer>
+</div>
+
+<!-- Shopping List Modal -->
+<div class="modal" id="listModal">
+  <div class="card">
+    <h3>🧾 Your Shopping List</h3>
+    <ul id="listItems" style="margin:8px 0 12px 0;padding-left:20px;"></ul>
+    <div class="small" id="listTimer">Closing in 30s...</div>
+    <button class="btn ghost" id="listClose">Done</button>
+  </div>
+</div>
+
+<!-- John's Message Popup -->
+<div class="popup" id="msgPopup">
+  <div class="card">
+    <h3>📩 Message from John</h3>
+    <p>"Hey! Could you grab <b>Orange Juice</b> and <b>Soap</b> if possible? No worries if not."</p>
+    <button class="btn ghost" id="ignoreMsg">Ignore</button>
+    <button class="btn primary" id="acceptMsg">Accept</button>
+  </div>
+</div>
+
+<script>
+// 🧹 RESET EVERYTHING ON PAGE LOAD
+window.addEventListener('load', () => {
+  localStorage.clear();
+  localStorage.setItem('wallet', 5000);
+  localStorage.setItem('cashInHand', 600);
+  localStorage.setItem('visitedStores', JSON.stringify([]));
+  localStorage.setItem('neighborChoice', 'ignored');
+});
+
+(function(){
+  const keyWallet='wallet', keyCash='cashInHand', keyVisited='visitedStores',
+        keyATM='atmUses', keyList='listViews', keyNeighbor='neighborChoice';
+  let wallet=Number(localStorage.getItem(keyWallet))||5000;
+  let cash=Number(localStorage.getItem(keyCash))||600;
+  let visited=JSON.parse(localStorage.getItem(keyVisited)||'[]');
+  let atmUses=Number(localStorage.getItem(keyATM))||0;
+  let listViews=Number(localStorage.getItem(keyList))||0;
+  let neighborChoice=localStorage.getItem(keyNeighbor)||null;
+
+  const walletVal=document.getElementById('walletVal');
+  const cashVal=document.getElementById('cashVal');
+  const sideWallet=document.getElementById('sideWallet');
+  const sideCash=document.getElementById('sideCash');
+  const sideViews=document.getElementById('sideViews');
+  const atm200=document.getElementById('atm200');
+  const atm500=document.getElementById('atm500');
+  const goHomeBtn=document.getElementById('goHomeBtn');
+  const visitedCount=document.getElementById('visitedCount');
+  const johnStatus=document.getElementById('johnStatus');
+  const listModal=document.getElementById('listModal');
+  const listItems=document.getElementById('listItems');
+  const listTimer=document.getElementById('listTimer');
+  const listClose=document.getElementById('listClose');
+  const msgPopup=document.getElementById('msgPopup');
+  const acceptMsg=document.getElementById('acceptMsg');
+  const ignoreMsg=document.getElementById('ignoreMsg');
+  const listViewBtn=document.getElementById('viewListBtn');
+  const msgViewBtn=document.getElementById('viewMsgBtn');
+  const listViewsEl=document.getElementById('listViews');
+  const atmUsesEl=document.getElementById('atmUses');
+
+  const shoppingList=["Milk","Bread","Apples","Toothpaste","Shampoo","Tissue Box","Pain Relief Tablets","Bandages","Notebook","Pen"];
+
+  function updateUI(){
+    walletVal.textContent=wallet;cashVal.textContent=cash;
+    sideWallet.textContent=wallet;sideCash.textContent=cash;
+    sideViews.textContent=listViews;
+    listViewsEl.textContent=listViews;atmUsesEl.textContent=atmUses;
+    visitedCount.textContent=visited.length;
+    document.querySelectorAll('.store').forEach(st=>{
+      const id=st.dataset.id;
+      if(visited.includes(id))st.classList.add('visited');else st.classList.remove('visited');
+    });
+      // ✅ Always enable Go Home for testing or skipping store visits
+  goHomeBtn.disabled = false;
+
+  }
+  updateUI();
+
+  function withdraw(amt){
+    if(wallet<amt)return alert('Not enough in wallet.');
+    if(!confirm(`Withdraw ₹${amt}?`))return;
+    wallet-=amt;cash+=amt;atmUses++;
+    localStorage.setItem(keyWallet,wallet);
+    localStorage.setItem(keyCash,cash);
+    localStorage.setItem(keyATM,atmUses);
+    updateUI();
+  }
+  atm200.onclick=()=>withdraw(200);
+  atm500.onclick=()=>withdraw(500);
+
+  // store navigation
+  document.querySelectorAll('.store').forEach(st=>{
+    st.onclick=()=>{
+      const id=st.dataset.id;
+      if(!visited.includes(id))visited.push(id);
+      localStorage.setItem(keyVisited,JSON.stringify(visited));
+      updateUI();
+      if(id==='grocery') window.location.href='store_grocery.html';
+      else if(id==='pharmacy') window.location.href='store_pharmacy.html';
+      else if(id==='general') window.location.href='store_general.html';
+      else if(id==='stationery') window.location.href='store_stationery.html';
+      else if(id==='cafe') window.location.href='store_cafe.html';
+      else if(id==='flower') window.location.href='store_flower.html';
+      else if(id==='sports') window.location.href='store_sports.html';
+      else if(id==='book') window.location.href='store_book.html';
+      else alert('🚧 This store is under development.');
+    };
+  });
+
+  // list modal
+  listViewBtn.onclick=()=>{
+    listModal.style.display='flex';
+    listItems.innerHTML='';
+    shoppingList.forEach(it=>{
+      const li=document.createElement('li');li.textContent=it;listItems.appendChild(li);
+    });
+    listViews++;
+    localStorage.setItem(keyList,listViews);
+    updateUI();
+    let t=30;
+    const iv=setInterval(()=>{t--;listTimer.textContent='Closing in '+t+'s';if(t<=0){clearInterval(iv);listModal.style.display='none';}},1000);
+    listClose.onclick=()=>{clearInterval(iv);listModal.style.display='none';};
+  };
+
+  // john message
+  msgViewBtn.onclick=()=>msgPopup.style.display='flex';
+  acceptMsg.onclick=()=>{
+    neighborChoice='accepted';
+    localStorage.setItem(keyNeighbor,neighborChoice);
+    johnStatus.textContent='Accepted John’s request.';
+    msgPopup.style.display='none';
+  };
+  ignoreMsg.onclick=()=>{
+    neighborChoice='ignored';
+    localStorage.setItem(keyNeighbor,neighborChoice);
+    johnStatus.textContent='Ignored John’s request.';
+    msgPopup.style.display='none';
+  };
+
+  // 🏠 Go Home → Evening Reflection
+  goHomeBtn.onclick=()=>{
+    // ensure latest data is stored
+    localStorage.setItem(keyWallet,wallet);
+    localStorage.setItem(keyCash,cash);
+    localStorage.setItem(keyVisited,JSON.stringify(visited));
+    localStorage.setItem(keyATM,atmUses);
+    localStorage.setItem(keyList,listViews);
+    localStorage.setItem(keyNeighbor,neighborChoice);
+
+    // gentle transition + narration
+    alert("You return home after a long day in the market.\nLet's sit down and reflect on your day...");
+    document.body.style.opacity = 0;
+    setTimeout(()=>{ window.location.href='evening_reflection.html'; }, 1000);
+  };
+
+  listModal.onclick=e=>{if(e.target===listModal)listModal.style.display='none';};
+  msgPopup.onclick=e=>{if(e.target===msgPopup)msgPopup.style.display='none';};
+
+  window.addEventListener('focus',()=>{
+    wallet=Number(localStorage.getItem(keyWallet))||wallet;
+    cash=Number(localStorage.getItem(keyCash))||cash;
+    visited=JSON.parse(localStorage.getItem(keyVisited)||JSON.stringify(visited));
+    listViews=Number(localStorage.getItem(keyList))||listViews;
+    atmUses=Number(localStorage.getItem(keyATM))||atmUses;
+    neighborChoice=localStorage.getItem(keyNeighbor)||neighborChoice;
+    updateUI();
+  });
+})();
+</script>
+</body>
+</html>

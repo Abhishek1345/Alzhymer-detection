@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📚 Bookstore — Judgment & Prioritization Test</title>
+<style>
+:root{
+  --bg:#f9f8ff;--card:#ffffff;--accent:#6366f1;--muted:#6b7280;
+  font-family:"Patrick Hand","Comic Sans MS",system-ui;
+}
+body{margin:0;background:linear-gradient(180deg,#f9f8ff,#f1f2ff);color:#0f172a;}
+.wrap{max-width:900px;margin:20px auto;padding:20px;}
+.panel{background:var(--card);border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+h1{margin:0;font-size:26px;}
+.muted{color:var(--muted);margin-top:4px;font-size:15px;}
+.purpose{background:#eef2ff;border-left:6px solid var(--accent);padding:12px;border-radius:8px;margin:14px 0;font-size:15px;}
+.story{font-size:16px;line-height:1.6;margin-bottom:14px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;}
+.item{border:2px solid #e0e7ff;border-radius:10px;background:#fff;padding:10px;text-align:center;cursor:pointer;transition:.15s;}
+.item:hover{background:#eef2ff;border-color:#818cf8;transform:translateY(-2px);}
+.item.selected{background:#e0e7ff;border-color:#6366f1;box-shadow:0 4px 10px rgba(99,102,241,0.2);}
+.item .emoji{font-size:36px;}
+.item .price{font-size:13px;color:#475569;margin-top:4px;}
+.controls{display:flex;gap:10px;align-items:center;margin-top:16px;}
+.btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.secondary{background:#f1f5f9;color:var(--accent);}
+.result{display:none;margin-top:14px;padding:14px;border-radius:10px;background:#eef2ff;border:2px solid #6366f1;}
+footer{text-align:center;margin-top:16px;color:#6b7280;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>📚 Bookstore</h1>
+    <div class="muted">Judgment & Prioritization Test</div>
+
+    <div class="purpose">
+      <strong>Purpose of the Scene</strong><br>
+      This test measures <b>judgment</b>, <b>task prioritization</b>, and <b>self-control</b>.
+      Participants often get tempted by activities that “feel productive” — like browsing books — even when off-task.
+      Alzheimer’s can weaken task boundaries, making it harder to focus on relevant goals.
+    </div>
+
+    <div class="story">
+      You step into a quiet bookstore. The smell of paper and coffee fills the air.  
+      Rows of colorful covers — travel guides, novels, self-help — draw your attention.  
+      You remember your goal was to buy groceries and essentials.  
+      Do you still want to explore or make a purchase?
+    </div>
+
+    <div class="grid" id="itemsGrid"></div>
+
+    <div class="controls">
+      <button class="btn primary" id="checkoutBtn">📖 Buy Selected</button>
+      <button class="btn secondary" id="exitBtn">🚪 Exit Store</button>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+
+    <footer>This scene measures your ability to prioritize relevant actions over distractions.</footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wallet=Number(localStorage.getItem('wallet'))||5000;
+  let cash=Number(localStorage.getItem('cashInHand'))||600;
+
+  const grid=document.getElementById('itemsGrid');
+  const resultBox=document.getElementById('resultBox');
+  const items=[
+    {name:"Fiction Novel",emoji:"📖",price:150},
+    {name:"Travel Guide",emoji:"🗺️",price:120},
+    {name:"Cooking Book",emoji:"🍲",price:130},
+    {name:"Puzzle Book",emoji:"🧩",price:90},
+    {name:"Comic Book",emoji:"🎨",price:80}
+  ];
+
+  let selected=[];
+  items.forEach((it,i)=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<div class="emoji">${it.emoji}</div><div><b>${it.name}</b></div><div class="price">₹${it.price}</div>`;
+    div.addEventListener('click',()=>{
+      const idx=selected.indexOf(i);
+      if(idx===-1){selected.push(i);div.classList.add('selected');}
+      else{selected.splice(idx,1);div.classList.remove('selected');}
+    });
+    grid.appendChild(div);
+  });
+
+  document.getElementById('checkoutBtn').addEventListener('click',()=>{
+    const chosen=selected.map(i=>items[i]);
+    const total=chosen.reduce((s,x)=>s+x.price,0);
+    if(total>cash){alert("⚠️ Not enough cash. ATM is outside the market.");return;}
+
+    // buying = judgment lapse, small penalty
+    let score=0;
+    if(chosen.length>0)score=-0.75; else score=0.25; // bonus if resisted
+    cash-=total;
+    localStorage.setItem('cashInHand',cash);
+
+    const result={
+      store:"book",
+      chosen:chosen.map(x=>x.name),
+      spent:total,
+      score,
+      cashLeft:cash,
+      walletLeft:wallet,
+      time:new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('store_book_result',JSON.stringify(result));
+
+    resultBox.style.display='block';
+    resultBox.innerHTML=`
+      <strong>Bookstore Summary</strong><br>
+      📚 Items: ${chosen.map(x=>x.name).join(', ')||'None'}<br>
+      💰 Total Spent: ₹${total}<br>
+      🧮 Score Impact: ${score>=0?'+':''}${score}<br><br>
+      ${
+        chosen.length>0
+        ? 'You bought something off-task. Mild judgment distraction detected.'
+        : 'You browsed but stayed focused — excellent prioritization.'
+      }
+    `;
+  });
+
+  document.getElementById('exitBtn').addEventListener('click',()=>{
+    const visited=JSON.parse(localStorage.getItem('visitedStores')||'[]');
+    if(!visited.includes('book'))visited.push('book');
+    localStorage.setItem('visitedStores',JSON.stringify(visited));
+    window.location.href='market_street.html';
+  });
+})();
+</script>
+</body>
+</html>

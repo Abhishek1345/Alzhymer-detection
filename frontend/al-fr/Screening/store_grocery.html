@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🥦 Grocery Store — Memory Recall & Budget Test</title>
+<style>
+  :root{
+    --bg:#fffdf3; --card:#fff; --muted:#6b7280; --accent:#2563eb;
+    font-family: "Patrick Hand","Comic Sans MS",system-ui;
+  }
+  body{margin:0;background:linear-gradient(180deg,#fffdf3,#f9f5ee);color:#172554;}
+  .wrap{max-width:1100px;margin:22px auto;padding:18px;}
+  h1{margin:0;font-size:26px;}
+  .muted{color:var(--muted);margin-top:4px;font-size:15px;}
+  .panel{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 8px 24px rgba(10,20,40,0.06);}
+  .purpose{background:#f1f5f9;border-left:6px solid var(--accent);padding:12px;border-radius:8px;margin:14px 0;font-size:15px;}
+  .story{font-size:16px;line-height:1.5;margin-bottom:14px;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;background:#f9fafb;border-radius:10px;padding:10px 14px;box-shadow:0 4px 10px rgba(0,0,0,0.05);}
+  .topbar div{font-weight:bold;}
+  .layout{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-top:16px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;}
+  .item{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px;text-align:center;cursor:pointer;transition:.15s;}
+  .item:hover{background:#f3f9ff;border-color:#93c5fd;transform:translateY(-3px);}
+  .item.selected{background:#e0f2fe;border-color:var(--accent);box-shadow:0 4px 12px rgba(37,99,235,0.12);}
+  .item .emoji{font-size:36px;margin-bottom:6px;}
+  .item .price{font-size:13px;color:#475569;margin-top:4px;}
+  .sidebar{background:#fbfdff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;}
+  .sidebar h3{margin:4px 0 8px 0;}
+  .basket{min-height:150px;border:1px dashed #d1d5db;border-radius:8px;padding:8px;}
+  .basket-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #eef3ff;}
+  .controls{display:flex;gap:10px;align-items:center;margin-top:14px;}
+  .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;}
+  .btn.primary{background:var(--accent);color:#fff;}
+  .btn.secondary{background:#f3f6ff;color:var(--accent);}
+  .result{display:none;margin-top:14px;padding:14px;border-radius:10px;background:#ecfdf5;border:2px solid #16a34a;}
+  footer{text-align:center;margin-top:16px;color:var(--muted);font-size:13px;}
+  @media(max-width:880px){.layout{grid-template-columns:1fr}.sidebar{order:2;margin-top:16px;}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h1>🥦 Grocery Store</h1>
+      <div class="muted">Memory Recall & Budget Judgment Test</div>
+
+      <div class="topbar">
+        <div>💼 Wallet: ₹<span id="walletVal">5000</span></div>
+        <div>💸 Cash in Hand: ₹<span id="cashVal">600</span></div>
+        <div>🏧 ATM: Outside the Market</div>
+      </div>
+
+      <div class="purpose">
+        <strong>Purpose of the Test</strong><br>
+        This task evaluates <b>memory recall</b>, <b>attention control</b>, and <b>financial reasoning</b> in a realistic grocery environment.<br><br>
+        You must remember which items you came to buy, ignore irrelevant or tempting ones, and manage purchases using limited cash.
+        People with early Alzheimer’s may struggle with such goal-oriented activities — forgetting essentials, overspending, or making impulsive decisions.
+      </div>
+
+      <div class="story">
+        You enter the grocery store with ₹600 in cash. Shelves are filled with fruits, snacks, and daily needs. 
+        The ATM is outside the market, so you must manage what you have carefully. 
+        Choose only the items you think you needed — once your cash runs out, you’ll have to leave.
+      </div>
+
+      <div class="layout">
+        <div>
+          <div id="itemsGrid" class="grid"></div>
+
+          <div class="controls">
+            <button class="btn primary" id="checkoutBtn">✅ Checkout</button>
+            <button class="btn secondary" id="exitBtn">🚪 Exit Store</button>
+            <div style="margin-left:auto;font-weight:bold;">Cash Remaining: ₹<span id="cashRemaining">600</span></div>
+          </div>
+
+          <div id="resultBox" class="result"></div>
+        </div>
+
+        <aside class="sidebar">
+          <h3>🛒 Shopping Basket</h3>
+          <div class="basket" id="basket"></div>
+          <div style="margin-top:10px;font-size:14px;">
+            Total: ₹<span id="basketTotal">0</span>
+          </div>
+        </aside>
+      </div>
+      <footer>This test measures memory, financial awareness, and impulse control in a realistic shopping context.</footer>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const walletVal = document.getElementById('walletVal');
+  const cashVal = document.getElementById('cashVal');
+  const cashRemaining = document.getElementById('cashRemaining');
+  const grid = document.getElementById('itemsGrid');
+  const basketEl = document.getElementById('basket');
+  const basketTotalEl = document.getElementById('basketTotal');
+  const resultBox = document.getElementById('resultBox');
+
+  // persistent values from localStorage
+  let wallet = Number(localStorage.getItem('wallet')) || 5000;
+  let cash = Number(localStorage.getItem('cashInHand')) || 600;
+
+  const items = [
+    {name:"Milk", emoji:"🥛", price:60, type:"list"},
+    {name:"Bread", emoji:"🍞", price:50, type:"list"},
+    {name:"Apples", emoji:"🍎", price:100, type:"list"},
+    {name:"Toothpaste", emoji:"🪥", price:90, type:"list"},
+    {name:"Shampoo", emoji:"🧴", price:110, type:"list"},
+    {name:"Tomatoes", emoji:"🍅", price:60, type:"distractor"},
+    {name:"Bananas", emoji:"🍌", price:80, type:"distractor"},
+    {name:"Salt", emoji:"🧂", price:40, type:"distractor"},
+    {name:"Sponge", emoji:"🧽", price:70, type:"distractor"},
+    {name:"Chocolate", emoji:"🍫", price:90, type:"temptation"},
+    {name:"Cookies", emoji:"🍪", price:70, type:"temptation"},
+    {name:"Ice Cream", emoji:"🍦", price:120, type:"temptation"}
+  ];
+
+  let selected = [];
+  walletVal.textContent = wallet;
+  cashVal.textContent = cash;
+  cashRemaining.textContent = cash;
+
+  // Render items
+  items.forEach((it, idx)=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<div class="emoji">${it.emoji}</div><div><b>${it.name}</b></div><div class="price">₹${it.price}</div>`;
+    div.addEventListener('click',()=>{
+      const already = selected.includes(idx);
+      const total = selected.reduce((s,i)=>s+items[i].price,0);
+      if(!already && total + it.price > cash){
+        alert("⚠️ You don't have enough cash. The ATM is outside.");
+        return;
+      }
+      if(already){selected = selected.filter(x=>x!==idx);div.classList.remove('selected');}
+      else{selected.push(idx);div.classList.add('selected');}
+      updateBasket();
+    });
+    grid.appendChild(div);
+  });
+
+  function updateBasket(){
+    basketEl.innerHTML='';
+    let total = 0;
+    if(selected.length===0){
+      basketEl.innerHTML='<div style="font-size:14px;color:#6b7280;">No items selected</div>';
+    } else {
+      selected.forEach(i=>{
+        const it=items[i];
+        total+=it.price;
+        const row=document.createElement('div');
+        row.className='basket-item';
+        row.innerHTML=`<div>${it.emoji} ${it.name}</div><div>₹${it.price}</div>`;
+        basketEl.appendChild(row);
+      });
+    }
+    basketTotalEl.textContent=total;
+    cashRemaining.textContent=cash - total;
+  }
+
+  document.getElementById('checkoutBtn').addEventListener('click',()=>{
+    const chosen = selected.map(i=>items[i]);
+    const total = chosen.reduce((s,x)=>s+x.price,0);
+    const correct = chosen.filter(x=>x.type==="list").length;
+    const wrong = chosen.filter(x=>x.type!=="list").length;
+
+    let score = correct*1 - wrong*0.5;
+    if(total<=cash) score+=0.5; else score-=1;
+    score = Math.max(0,Math.min(2,score));
+
+    cash -= total;
+    localStorage.setItem('cashInHand',cash);
+    localStorage.setItem('wallet',wallet);
+    const record={
+      store:"grocery",chosen:chosen.map(x=>x.name),correct,wrong,total,score,
+      cashLeft:cash, walletLeft:wallet, time:new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('store_grocery_result',JSON.stringify(record));
+
+    resultBox.style.display='block';
+    resultBox.innerHTML=`
+      <strong>Checkout Summary</strong><br>
+      🛒 Items: ${chosen.map(x=>x.name).join(', ')||'None'}<br>
+      ✅ Correct: ${correct} | ❌ Wrong: ${wrong}<br>
+      💰 Total Spent: ₹${total} | Cash Left: ₹${cash}<br>
+      🧮 Score: ${score}/2<br><br>
+      ${score>=1.5?'Excellent recall and spending control.':
+        score>=1?'Average performance; minor distractions observed.':
+        'Low performance; several impulsive or incorrect choices.'}
+    `;
+  });
+
+  document.getElementById('exitBtn').addEventListener('click',()=>{
+    const visited = JSON.parse(localStorage.getItem('visitedStores')||'[]');
+    if(!visited.includes('grocery')) visited.push('grocery');
+    localStorage.setItem('visitedStores',JSON.stringify(visited));
+    window.location.href='market_street.html';
+  });
+})();
+</script>
+</body>
+</html>

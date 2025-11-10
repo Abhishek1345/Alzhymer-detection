@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>💊 Pharmacy Store — Reasoning & Memory Recall Test</title>
+<style>
+:root{
+  --bg:#f5f8ff;--card:#ffffff;--accent:#2563eb;--muted:#6b7280;
+  font-family:"Patrick Hand","Comic Sans MS",system-ui;
+}
+body{margin:0;background:linear-gradient(180deg,#f5f8ff,#eef5ff);color:#0f172a;}
+.wrap{max-width:1100px;margin:20px auto;padding:20px;}
+.panel{background:var(--card);border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+h1{margin:0;font-size:26px;}
+.muted{color:var(--muted);margin-top:4px;font-size:15px;}
+.purpose{background:#f1f5f9;border-left:6px solid var(--accent);padding:12px;border-radius:8px;margin:14px 0;font-size:15px;}
+.story{font-size:16px;line-height:1.6;margin-bottom:14px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;background:#f9fafb;padding:10px 16px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.05);}
+.layout{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-top:16px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.item{border:2px solid #e5e7eb;border-radius:10px;background:#fff;padding:10px;text-align:center;cursor:pointer;transition:.15s;}
+.item:hover{background:#f1f5ff;border-color:#93c5fd;transform:translateY(-2px);}
+.item.selected{background:#e0f2fe;border-color:var(--accent);box-shadow:0 4px 12px rgba(37,99,235,0.12);}
+.item .emoji{font-size:36px;}
+.item .price{font-size:13px;color:#475569;margin-top:4px;}
+.sidebar{background:#fbfdff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;}
+.sidebar h3{margin-top:0;}
+.basket{min-height:150px;border:1px dashed #d1d5db;border-radius:8px;padding:8px;}
+.basket-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #eef3ff;}
+.controls{display:flex;gap:10px;align-items:center;margin-top:14px;}
+.btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.secondary{background:#f1f5f9;color:var(--accent);}
+.result{display:none;margin-top:14px;padding:14px;border-radius:10px;background:#ecfdf5;border:2px solid #16a34a;}
+footer{text-align:center;margin-top:16px;color:var(--muted);font-size:13px;}
+@media(max-width:880px){.layout{grid-template-columns:1fr}.sidebar{order:2;margin-top:16px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>💊 Pharmacy Store</h1>
+    <div class="muted">Reasoning & Memory Recall Test</div>
+
+    <div class="topbar">
+      <div><b>💼 Wallet:</b> ₹<span id="walletVal">0</span></div>
+      <div><b>💸 Cash in Hand:</b> ₹<span id="cashVal">0</span></div>
+      <div><b>🏧 ATM:</b> Outside the Market</div>
+    </div>
+
+    <div class="purpose">
+      <strong>Purpose of the Test</strong><br>
+      This scene evaluates <b>reasoning</b>, <b>semantic memory</b>, and <b>judgment</b> —
+      particularly the ability to recall medically relevant items while ignoring similar, irrelevant ones.
+      Early Alzheimer’s symptoms often involve selecting familiar but incorrect items. This test checks
+      if the participant can differentiate between essential and non-essential pharmacy products under real conditions.
+    </div>
+
+    <div class="story">
+      You step inside the pharmacy. Shelves are filled with medicine boxes, lotions, and daily essentials.
+      You remember that you needed a few medical supplies — but not everything here is necessary.
+      The cashier watches as you think through your list, trying to stay within your limited cash.
+    </div>
+
+    <div class="layout">
+      <div>
+        <div id="itemsGrid" class="grid"></div>
+
+        <div class="controls">
+          <button class="btn primary" id="checkoutBtn">✅ Checkout</button>
+          <button class="btn secondary" id="exitBtn">🚪 Exit Store</button>
+          <div style="margin-left:auto;font-weight:bold;">Cash Remaining: ₹<span id="cashRemain">0</span></div>
+        </div>
+
+        <div id="resultBox" class="result"></div>
+      </div>
+
+      <aside class="sidebar">
+        <h3>🛒 Basket</h3>
+        <div class="basket" id="basket"></div>
+        <div style="margin-top:8px;font-size:14px;">Total: ₹<span id="basketTotal">0</span></div>
+      </aside>
+    </div>
+
+    <footer>This test measures reasoning, memory, and attention in realistic daily-life contexts.</footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const walletVal=document.getElementById('walletVal');
+  const cashVal=document.getElementById('cashVal');
+  const cashRemain=document.getElementById('cashRemain');
+  const grid=document.getElementById('itemsGrid');
+  const basket=document.getElementById('basket');
+  const basketTotal=document.getElementById('basketTotal');
+  const resultBox=document.getElementById('resultBox');
+
+  // load global values
+  let wallet=Number(localStorage.getItem('wallet'))||5000;
+  let cash=Number(localStorage.getItem('cashInHand'))||600;
+  const neighborChoice=localStorage.getItem('neighborChoice')||'ignored';
+
+  walletVal.textContent=wallet;
+  cashVal.textContent=cash;
+  cashRemain.textContent=cash;
+
+  const items=[
+    {name:"Pain Relief Tablets",emoji:"💊",price:120,type:"list"},
+    {name:"Bandages",emoji:"🩹",price:80,type:"list"},
+    {name:"Mints",emoji:"🍬",price:50,type:"distractor"},
+    {name:"Lotion",emoji:"🧴",price:90,type:"distractor"},
+    {name:"Orange Juice",emoji:"🧃",price:70,type:"neighbor"},
+    {name:"Multivitamin",emoji:"💊",price:150,type:"distractor"},
+    {name:"Soap",emoji:"🧼",price:60,type:"neighbor"}
+  ];
+
+  let selected=[];
+  const gridRender=()=>{
+    items.forEach((it,i)=>{
+      const div=document.createElement('div');
+      div.className='item';
+      div.innerHTML=`<div class="emoji">${it.emoji}</div><div><b>${it.name}</b></div><div class="price">₹${it.price}</div>`;
+      div.addEventListener('click',()=>{
+        const idx=selected.indexOf(i);
+        const total=selected.reduce((s,x)=>s+items[x].price,0);
+        if(idx===-1){
+          if(total+it.price>cash){alert("⚠️ Not enough cash. ATM is outside the market.");return;}
+          selected.push(i);div.classList.add('selected');
+        }else{selected.splice(idx,1);div.classList.remove('selected');}
+        updateBasket();
+      });
+      grid.appendChild(div);
+    });
+  };
+  gridRender();
+
+  function updateBasket(){
+    basket.innerHTML='';
+    let total=0;
+    if(selected.length===0){
+      basket.innerHTML='<div style="color:#6b7280;font-size:14px;">No items selected.</div>';
+    }else{
+      selected.forEach(i=>{
+        const it=items[i];
+        total+=it.price;
+        const row=document.createElement('div');
+        row.className='basket-item';
+        row.innerHTML=`<div>${it.emoji} ${it.name}</div><div>₹${it.price}</div>`;
+        basket.appendChild(row);
+      });
+    }
+    basketTotal.textContent=total;
+    cashRemain.textContent=cash-total;
+  }
+
+  document.getElementById('checkoutBtn').addEventListener('click',()=>{
+    const chosen=selected.map(i=>items[i]);
+    const total=chosen.reduce((s,x)=>s+x.price,0);
+    const correct=chosen.filter(x=>x.type==="list").length;
+    const distractors=chosen.filter(x=>x.type==="distractor").length;
+    const neighbors=chosen.filter(x=>x.type==="neighbor").length;
+
+    let score=correct*1 - distractors*0.5;
+    if(neighborChoice==="accepted") score += neighbors*0.5;
+    else score -= neighbors*0.5;
+
+    if(total<=cash) score+=0.5; else score-=1;
+    score=Math.max(0,Math.min(2,score));
+
+    cash -= total;
+    localStorage.setItem('cashInHand',cash);
+    localStorage.setItem('wallet',wallet);
+
+    const result={
+      store:"pharmacy",chosen:chosen.map(x=>x.name),correct,distractors,neighbors,total,score,
+      cashLeft:cash,walletLeft:wallet,time:new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('store_pharmacy_result',JSON.stringify(result));
+
+    resultBox.style.display='block';
+    resultBox.innerHTML=`
+      <strong>Checkout Summary</strong><br>
+      🛒 Items: ${chosen.map(x=>x.name).join(', ')||'None'}<br>
+      ✅ Correct: ${correct} | ❌ Wrong: ${distractors}<br>
+      💰 Total Spent: ₹${total} | Cash Left: ₹${cash}<br>
+      🧮 Score: ${score}/2<br><br>
+      ${
+        score>=1.5
+        ? 'Excellent recall and reasoning — you chose pharmacy items correctly.'
+        : score>=1
+        ? 'Average performance — minor confusion or non-essential selections noticed.'
+        : 'Low performance — several incorrect or unrelated items selected.'
+      }
+    `;
+  });
+
+  document.getElementById('exitBtn').addEventListener('click',()=>{
+    const visited=JSON.parse(localStorage.getItem('visitedStores')||'[]');
+    if(!visited.includes('pharmacy'))visited.push('pharmacy');
+    localStorage.setItem('visitedStores',JSON.stringify(visited));
+    window.location.href='market_street.html';
+  });
+})();
+</script>
+</body>
+</html>

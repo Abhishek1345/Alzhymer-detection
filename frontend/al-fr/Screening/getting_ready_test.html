@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Getting Ready to Go Out — Reasoning & Memory Test</title>
+<style>
+:root {
+  --bg:#f1f5ff;--card:#fff;--accent:#2563eb;--muted:#6b7280;
+  font-family:"Patrick Hand","Comic Sans MS",system-ui;
+}
+body{margin:0;background:linear-gradient(180deg,#eef3ff 0%,var(--bg) 80%);color:#1e293b;}
+.wrap{max-width:960px;margin:30px auto;padding:20px;}
+.scene{background:var(--card);border-radius:16px;padding:28px;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:10px;}
+.clock{
+  width:70px;height:70px;border-radius:50%;border:3px solid #dbeafe;
+  background:radial-gradient(circle at 50% 50%,#fff 0%,#e0f2fe 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:20px;color:#1e3a8a;
+}
+.title{font-size:26px;font-weight:700;}
+.muted{color:var(--muted);font-size:15px;}
+.purpose{background:#eef6ff;border-left:5px solid var(--accent);padding:12px 16px;border-radius:8px;
+margin-top:10px;margin-bottom:18px;line-height:1.6;font-size:15px;}
+.story{margin-top:12px;line-height:1.6;font-size:17px;}
+.timer-bar{height:8px;width:0;background:var(--accent);border-radius:6px;margin-top:12px;transition:width 1s linear;}
+.wardrobe{margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.item{background:#f9fafb;border:2px solid #e5e7eb;border-radius:12px;padding:14px 10px;text-align:center;
+cursor:pointer;transition:all .2s ease;font-size:18px;}
+.item:hover{background:#f3f6ff;border-color:var(--accent);}
+.item.selected{background:linear-gradient(180deg,#e6f1ff,#f5f9ff);border-color:var(--accent);
+box-shadow:0 6px 14px rgba(37,99,235,.2);transform:scale(1.03);}
+.controls{text-align:center;margin-top:24px;}
+.btn{padding:10px 16px;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:16px;transition:all .2s ease;}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.primary:hover{background:#1d4ed8;}
+.btn.next{background:#7c3aed;color:#fff;}
+.btn.next:hover{background:#5b21b6;}
+.result{display:none;margin-top:22px;text-align:center;font-size:17px;line-height:1.6;}
+footer{text-align:center;color:var(--muted);font-size:13px;margin-top:20px;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="scene">
+    <div class="header">
+      <div class="clock">☀️</div>
+      <div>
+        <div class="title">Getting Ready to Go Out</div>
+        <div class="muted">Choose what you’d wear for a warm summer morning — remember the forecast.</div>
+      </div>
+    </div>
+
+    <div class="purpose">
+      <strong>Purpose:</strong> This test examines <b>reasoning</b> (choosing context-appropriate items) and <b>episodic recall</b> (remembering the forecast from the newspaper).  
+      People with early Alzheimer’s often forget recent contextual cues — such as weather or plans — and make illogical or mismatched decisions.
+    </div>
+
+    <div class="story">
+      The sunlight is bright and the air feels warm. You’re about to head to the store.  
+      Choose the clothing and accessories that make sense for today’s weather — and remember the morning forecast hinted at <strong>possible rain</strong>.
+    </div>
+
+    <div id="timerBar" class="timer-bar"></div>
+
+    <div class="wardrobe" id="wardrobe">
+      <div class="item" data-id="tshirt">👕 T-shirt</div>
+      <div class="item" data-id="jeans">👖 Jeans</div>
+      <div class="item" data-id="shorts">🩳 Shorts</div>
+      <div class="item" data-id="sunglasses">🕶️ Sunglasses</div>
+      <div class="item" data-id="cap">🧢 Cap</div>
+      <div class="item" data-id="sunscreen">🧴 Sunscreen</div>
+      <div class="item" data-id="umbrella">☂️ Umbrella</div>
+      <div class="item" data-id="jacket">🧥 Jacket</div>
+      <div class="item" data-id="scarf">🧣 Scarf</div>
+      <div class="item" data-id="gloves">🧤 Gloves</div>
+      <div class="item" data-id="boots">👢 Boots</div>
+      <div class="item" data-id="wool_hat">🎩 Wool Hat</div>
+    </div>
+
+    <div class="controls">
+      <button id="confirmBtn" class="btn primary">✅ Confirm Outfit</button>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+
+    <div class="controls" style="margin-top:16px;">
+      <button id="nextBtn" class="btn next" style="display:none;">➡ Next Test</button>
+    </div>
+
+    <footer>This test measures reasoning and memory — are your choices logical for summer and the weather forecast?</footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wardrobe=document.getElementById('wardrobe');
+  const items=wardrobe.querySelectorAll('.item');
+  const confirmBtn=document.getElementById('confirmBtn');
+  const nextBtn=document.getElementById('nextBtn');
+  const resultBox=document.getElementById('resultBox');
+  const timerBar=document.getElementById('timerBar');
+
+  let selected=[], timer=0, interval;
+  const startTime=Date.now();
+
+  // timer progress bar (decision latency indicator)
+  interval=setInterval(()=>{
+    timer+=2; timerBar.style.width=Math.min(timer,100)+"%";
+    if(timer>=100) clearInterval(interval);
+  },1000);
+
+  items.forEach(item=>{
+    item.addEventListener('click',()=>{
+      const id=item.dataset.id;
+      if(selected.includes(id)){
+        selected=selected.filter(i=>i!==id);
+        item.classList.remove('selected');
+      } else {
+        selected.push(id);
+        item.classList.add('selected');
+      }
+    });
+  });
+
+  confirmBtn.addEventListener('click',()=>{
+    if(selected.length===0){alert("Please select at least one clothing item.");return;}
+    clearInterval(interval);
+    const timeTaken=((Date.now()-startTime)/1000).toFixed(1);
+
+    const summer=["tshirt","shorts","sunglasses","cap","sunscreen"];
+    const winter=["jacket","scarf","gloves","boots","wool_hat"];
+    const memoryItem="umbrella";
+
+    let score=5, summerScore=0, winterScore=0, memoryScore=0;
+    selected.forEach(id=>{
+      if(summer.includes(id)){score+=1;summerScore++;}
+      if(winter.includes(id)){score-=1;winterScore++;}
+      if(id===memoryItem){score+=2;memoryScore=2;}
+    });
+    score=Math.max(0,Math.min(10,score));
+
+    // interpretive summary
+    let conclusion="";
+    if(score>=8) conclusion="🟢 Excellent reasoning — you made season-appropriate and memory-based choices.";
+    else if(score>=6) conclusion="🟡 Average reasoning — mostly logical, but a few unnecessary or missing weather items.";
+    else if(memoryScore===0) conclusion="🔴 You forgot the umbrella — possible lapse in short-term recall from earlier context.";
+    else conclusion="🔴 Poor reasoning — items chosen don’t match current weather or forecast.";
+
+    const reasoning=[];
+    if(memoryScore>0) reasoning.push("✅ Remembered to take the umbrella — strong contextual recall.");
+    else reasoning.push("⚠️ Forgot the umbrella — missed key weather cue.");
+    if(winterScore>0) reasoning.push("🧣 Picked warm clothes — context mismatch for summer.");
+    if(summerScore>0) reasoning.push("☀️ Chose clothes suitable for a warm day.");
+    reasoning.push(`⏱️ Time taken: ${timeTaken}s`);
+
+    // save data
+    const data={scene:"getting_ready",selected,score,timeTaken,summerScore,winterScore,memoryScore,conclusion,completedAt:new Date().toLocaleTimeString()};
+    localStorage.setItem('getting_ready_scene',JSON.stringify(data));
+
+    resultBox.style.display='block';
+    resultBox.innerHTML=`
+      <p>You finish dressing and glance outside before leaving.</p>
+      <p><strong>Items chosen:</strong> ${selected.map(i=>i.replace("_"," ")).join(", ")}</p>
+      <p><strong>Score:</strong> ${score}/10</p>
+      <ul style="list-style:none;padding:0;margin:0;color:#374151;font-size:16px;line-height:1.5;">
+        ${reasoning.map(r=>`<li>${r}</li>`).join("")}
+      </ul>
+      <p><strong>Conclusion:</strong> ${conclusion}</p>
+    `;
+    confirmBtn.disabled=true;
+    nextBtn.style.display='inline-block';
+  });
+
+  nextBtn.addEventListener('click',()=>window.location.href="market_street.html");
+})();
+</script>
+</body>
+</html>

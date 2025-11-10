@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Morning Chronicle — Reading Scene</title>
+<style>
+:root {
+  --bg: #f4f1ea;
+  --ink: #1b1b1b;
+  --muted: #78716c;
+  --accent: #1e3a8a;
+  font-family: "Georgia", "Times New Roman", serif;
+}
+body {
+  margin: 0;
+  background: radial-gradient(circle at 40% 40%, #fefcf8 0%, var(--bg) 100%);
+  color: var(--ink);
+}
+.wrap {
+  max-width: 850px;
+  margin: 30px auto;
+  background: #fffdf7;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  border: 1px solid #e5e5e5;
+  padding: 24px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.fade-out {
+  animation: fadeOut 1.2s ease forwards;
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: scale(1.02); }
+}
+.purpose-box {
+  background: #f9fafb;
+  border-left: 5px solid var(--accent);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.masthead {
+  text-align: center;
+  border-bottom: 2px solid #333;
+  margin-bottom: 18px;
+}
+.masthead h1 {
+  font-family: "Times New Roman", serif;
+  font-size: 42px;
+  letter-spacing: 1px;
+  margin: 0;
+}
+.masthead small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: 14px;
+}
+.paper-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+article {
+  border-bottom: 1px dashed #ccc;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+article:last-child { border-bottom: none; }
+.headline {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+.lead {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+.illustration {
+  width: 100%;
+  height: 120px;
+  background: repeating-linear-gradient(45deg, #e2e8f0 0, #e2e8f0 4px, #f8fafc 4px, #f8fafc 8px);
+  border: 1px solid #d4d4d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: #94a3b8;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.ad-box {
+  background: #faf6e6;
+  border: 1px solid #e5d9b6;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-style: italic;
+}
+.controls {
+  text-align: center;
+  margin-top: 24px;
+}
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+}
+.btn:hover { background: #142d67; }
+footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="paperWrap">
+  <div class="purpose-box">
+    <strong>Purpose:</strong> This test measures <b>attention, comprehension, and memory retention</b>.  
+    People in early Alzheimer’s may forget short reading content or mix up details.  
+    Read naturally — you may be asked about this later.
+  </div>
+
+  <header class="masthead">
+    <h1>The Morning Chronicle</h1>
+    <small id="dateLine"></small>
+  </header>
+
+  <div class="paper-grid">
+
+    <!-- Left Column -->
+    <div>
+      <article>
+        <div class="illustration">☁️🌦️</div>
+        <div class="headline">Light Rain Expected This Evening</div>
+        <p class="lead">
+          According to the city meteorological office, light showers may arrive late this evening. 
+          Temperatures will stay mild throughout the day. Residents are advised to carry umbrellas if heading out after sunset.
+        </p>
+      </article>
+
+      <article>
+        <div class="illustration">🎨📚</div>
+        <div class="headline">City Library to Host Art Exhibit This Weekend</div>
+        <p class="lead">
+          The downtown City Library has announced a free art exhibit showcasing paintings and photographs by local artists. 
+          The event opens Saturday morning and continues through Sunday evening.
+        </p>
+      </article>
+    </div>
+
+    <!-- Right Column -->
+    <div>
+      <article>
+        <div class="illustration">🐕🚗</div>
+        <div class="headline">Local Shopkeeper Rescues Stray Dog</div>
+        <p class="lead">
+          A shopkeeper helped rescue a stray dog trapped in morning traffic near the market square. 
+          The dog, unharmed, was later taken to a nearby shelter.
+        </p>
+      </article>
+
+      <article>
+        <div class="illustration">🍎🛒</div>
+        <div class="headline">Fresh Apples on Sale — Half Price!</div>
+        <div class="ad-box">
+          Red and green apples are now available at Main Street Grocery for half price this weekend. 
+          Crisp, healthy, and perfect for your breakfast table.
+        </div>
+      </article>
+
+      <!-- Distraction article -->
+      <article>
+        <div class="illustration">🏏☕</div>
+        <div class="headline">Star Cricketer Seen at Downtown Café</div>
+        <p class="lead">
+          Locals spotted a famous cricketer enjoying breakfast at a café near the old market. 
+          Fans rushed for photos before he left quietly — no event was planned.
+        </p>
+      </article>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button id="doneBtn" class="btn">Finish Reading</button>
+  </div>
+
+  <footer>📰 Read at your own pace. The details may appear later in your day.</footer>
+</div>
+
+<script>
+(function(){
+  const dateEl = document.getElementById('dateLine');
+  const now = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  dateEl.textContent = now.toLocaleDateString('en-US', options);
+
+  const start = Date.now();
+  const wrap = document.getElementById('paperWrap');
+  const doneBtn = document.getElementById('doneBtn');
+  let scrolled = 0;
+  window.addEventListener('scroll', ()=>{ scrolled = Math.max(scrolled, window.scrollY); });
+
+  doneBtn.addEventListener('click', ()=>{
+    const end = Date.now();
+    const readTime = ((end - start)/1000).toFixed(1);
+    const scrollDepth = Math.round((scrolled / document.body.scrollHeight) * 100);
+
+    const readingData = {
+      scene: 'morning_newspaper',
+      readTime: readTime,
+      scrollDepth: scrollDepth,
+      time: new Date().toLocaleTimeString(),
+      info: {
+        weather: "Light rain expected in the evening",
+        event: "City Library Art Exhibit",
+        ad: "Apples on sale (red and green)",
+        local: "Shopkeeper rescued a stray dog",
+        distraction: "Cricketer seen at downtown café"
+      }
+    };
+    localStorage.setItem('newspaper_scene', JSON.stringify(readingData));
+
+    doneBtn.disabled = true;
+    doneBtn.textContent = "Reading Saved ✓";
+
+    const msg = document.createElement('p');
+    msg.style.marginTop = '12px';
+    msg.style.textAlign = 'center';
+    msg.style.color = '#1e293b';
+    msg.innerHTML = `
+      You finish reading and fold the paper neatly.<br>
+      <strong>Reading Time:</strong> ${readTime}s<br>
+      <strong>Scroll Depth:</strong> ${scrollDepth}%.
+    `;
+    document.querySelector('.controls').appendChild(msg);
+
+    // gentle fade to next test
+    setTimeout(()=>{
+      wrap.classList.add('fade-out');
+      setTimeout(()=>window.location.href = "shopping_list_test.html", 1300);
+    }, 2200);
+  });
+})();
+</script>
+</body>
+</html>

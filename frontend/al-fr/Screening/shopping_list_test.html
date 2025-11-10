@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Preparing for the Store — Memory Encoding Test</title>
+<style>
+:root {
+  --bg: #f9f7f2;
+  --card: #ffffff;
+  --accent: #2563eb;
+  --muted: #6b7280;
+  font-family: "Patrick Hand", "Comic Sans MS", system-ui, sans-serif;
+}
+body {
+  margin: 0;
+  background: radial-gradient(circle at 40% 40%, #fffefb 0%, var(--bg) 100%);
+  color: #1e293b;
+}
+.wrap { max-width: 900px; margin: 30px auto; padding: 20px; }
+.scene {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.clock {
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  border: 3px solid #dbeafe;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 50%, #fff 0%, #e0f2fe 100%);
+  font-size: 24px; font-weight: bold; color: #1e3a8a;
+}
+.title { font-size: 26px; font-weight: 700; }
+.muted { color: var(--muted); font-size: 15px; }
+.purpose {
+  background: #f0f8ff; border-left: 5px solid var(--accent);
+  padding: 12px 16px; border-radius: 8px; font-size: 15px; line-height: 1.6;
+  margin-top: 10px; margin-bottom: 18px;
+}
+.story {
+  line-height: 1.6; font-size: 17px; background: #f9fafb;
+  border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 14px; margin-bottom: 20px;
+}
+.list-card {
+  display: none;
+  background: #fffef8;
+  border: 1px solid #e4e4d6;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-top: 20px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+  background-image: repeating-linear-gradient(#fdfcf8, #fdfcf8 28px, #f0efe9 29px);
+}
+.list-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+ul { list-style: none; padding: 0; margin: 0; }
+li {
+  padding: 6px 0;
+  font-size: 18px;
+  border-bottom: 1px dotted #ddd;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+li:last-child { border-bottom: none; }
+
+.controls {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.primary:hover { background: #1d4ed8; }
+.btn.success { background: #16a34a; color: #fff; }
+.btn.success:hover { background: #15803d; }
+.btn.next { background: #7c3aed; color: #fff; }
+.btn.next:hover { background: #5b21b6; }
+
+.timer-bar {
+  height: 8px;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 6px;
+  transition: width 1s linear;
+  margin-top: 10px;
+}
+.result {
+  display: none;
+  margin-top: 18px;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.6;
+}
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="scene">
+    <div class="header">
+      <div class="clock">🛒</div>
+      <div>
+        <div class="title">Preparing for the Store</div>
+        <div class="muted">Take your time to remember what you need to buy.</div>
+      </div>
+    </div>
+
+    <div class="purpose">
+      <strong>Purpose:</strong> This test measures <b>short-term memory encoding</b> — your ability to learn and retain new information efficiently.  
+      People in early Alzheimer’s often reread lists multiple times or take longer to encode simple information.  
+      Try to remember as many items as possible before pressing “I Remember.”
+    </div>
+
+    <div class="story">
+      You’re getting ready to go shopping. You read about <strong>apples</strong> and <strong>rain</strong> in the morning newspaper.  
+      Take a good look at your list and remember everything carefully.
+    </div>
+
+    <div class="controls">
+      <button id="showListBtn" class="btn primary">🧾 Show Shopping List</button>
+      <button id="rememberBtn" class="btn success" disabled>✅ I Remember</button>
+    </div>
+
+    <div id="timerBar" class="timer-bar"></div>
+
+    <div id="listCard" class="list-card">
+      <div class="list-title">🛍️ Your Shopping List</div>
+      <ul id="shoppingList">
+        <li>🥛 Milk</li>
+        <li>🍞 Bread</li>
+        <li>🍎 Apples</li>
+        <li>🥚 Eggs</li>
+        <li>🧈 Butter</li>
+        <li>💊 Pain Relief Tablets</li>
+        <li>🪥 Toothpaste</li>
+        <li>🧴 Shampoo</li>
+        <li>☂️ Umbrella</li>
+        <li>📚 Art Magazine</li>
+      </ul>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+
+    <div class="controls" style="margin-top:16px;">
+      <button id="nextBtn" class="btn next" style="display:none;">➡ Next Test</button>
+    </div>
+
+    <footer>
+      This scene records your study time and number of re-views — both are indicators of short-term memory efficiency.
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const showListBtn = document.getElementById('showListBtn');
+  const rememberBtn = document.getElementById('rememberBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const listCard = document.getElementById('listCard');
+  const timerBar = document.getElementById('timerBar');
+  const resultBox = document.getElementById('resultBox');
+  let startTime = null;
+  let viewCount = 0;
+  let timerProgress = 0;
+  let timerInterval;
+
+  const items = [
+    "Milk","Bread","Apples","Eggs","Butter",
+    "Pain Relief Tablets","Toothpaste","Shampoo","Umbrella","Art Magazine"
+  ];
+
+  // 🎯 When user clicks “Show List”
+  showListBtn.addEventListener('click', ()=>{
+    viewCount++;
+    listCard.style.display = 'block';
+    rememberBtn.disabled = false;
+    showListBtn.disabled = true;
+    showListBtn.textContent = `🧾 Viewing List (${viewCount})`;
+    startTime = startTime || Date.now(); // record first open
+
+    // start timer animation (30 seconds max)
+    timerBar.style.width = "0%";
+    timerProgress = 0;
+    timerInterval = setInterval(()=>{
+      timerProgress += 3.33;
+      timerBar.style.width = Math.min(timerProgress,100)+"%";
+      if(timerProgress >= 100){
+        clearInterval(timerInterval);
+        hideList();
+      }
+    },1000);
+  });
+
+  // 🧠 Hide the list after timer or manually
+  function hideList(){
+    listCard.style.display = 'none';
+    showListBtn.disabled = false;
+    showListBtn.textContent = "👁️ View List Again (Score will drop)";
+  }
+
+  // ✅ “I Remember” pressed
+  rememberBtn.addEventListener('click', ()=>{
+    if(!startTime) return;
+    const endTime = Date.now();
+    const memorizeTime = ((endTime - startTime)/1000).toFixed(1);
+    clearInterval(timerInterval);
+    hideList();
+    rememberBtn.disabled = true;
+
+    // 🧮 Scoring system:
+    // Base = 10 points
+    // Time penalty: -1 if >20s, -2 if >35s
+    // View penalty: -1 for 2nd view, -2 for 3rd, etc.
+    let score = 10;
+    if(memorizeTime > 20) score -= 1;
+    if(memorizeTime > 35) score -= 1;
+    score -= Math.max(0, viewCount - 1);
+    if(score < 0) score = 0;
+
+    // Alzheimer’s-oriented conclusion
+    let conclusion = "";
+    if(score >= 9) conclusion = "🟢 Excellent encoding — strong short-term retention and focus.";
+    else if(score >= 6) conclusion = "🟡 Average encoding — some rechecking needed, mild memory hesitation.";
+    else conclusion = "🔴 Low encoding efficiency — repeated rechecking and longer encoding time may indicate reduced attention or early memory decline.";
+
+    // Save data
+    const data = {
+      scene: "shopping_list_memorization",
+      items: items,
+      memorizeTimeSeconds: memorizeTime,
+      views: viewCount,
+      score: score,
+      conclusion: conclusion,
+      completedAt: new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('shopping_list', JSON.stringify(data));
+
+    // 🧾 Show result
+    resultBox.style.display = 'block';
+    resultBox.innerHTML = `
+      <p>You close your notebook and prepare to leave for the market.</p>
+      <p><strong>Time Taken:</strong> ${memorizeTime} seconds</p>
+      <p><strong>Times List Viewed:</strong> ${viewCount}</p>
+      <p><strong>Score:</strong> ${score} / 10</p>
+      <p><strong>Conclusion:</strong> ${conclusion}</p>
+    `;
+
+    nextBtn.style.display = 'inline-block';
+  });
+
+  // ➡ Next test navigation
+  nextBtn.addEventListener('click', ()=>{
+    window.location.href = "getting_ready_test.html";
+  });
+})();
+</script>
+</body>
+</html>

@@ -12,6 +12,7 @@ export default function App() {
         <img src={logo} alt="NIT Jamshedpur Logo" className="logo" width={100}/>
         <div className="header-text">
           <h1 className="institute-name">NIT Jamshedpur</h1>
+          <i><p>Embedded Systems and IoT lab Project</p></i>
           <p className="presented-to">Presented to Dr. Basudeba Behera</p>
         </div>
       </header>
@@ -23,7 +24,9 @@ export default function App() {
         </div>
 
         <SensorMonitor />
+        
       </div>
+      <center><button className="nextPage" onClick={()=>{window.location.assign("/screening/getting_ready_test.html")}}>Go To Cognitive Assesment ➡</button></center>
     </div>
   );
 }

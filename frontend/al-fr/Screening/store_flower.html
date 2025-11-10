@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>💐 Flower Shop — Attention & Orientation Test</title>
+<style>
+:root{
+  --bg:#fef7fb;--card:#ffffff;--accent:#ec4899;--muted:#6b7280;
+  font-family:"Patrick Hand","Comic Sans MS",system-ui;
+}
+body{margin:0;background:linear-gradient(180deg,#fef7fb,#fff1f9);color:#0f172a;}
+.wrap{max-width:900px;margin:20px auto;padding:20px;}
+.panel{background:var(--card);border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+h1{margin:0;font-size:26px;}
+.muted{color:var(--muted);margin-top:4px;font-size:15px;}
+.purpose{background:#fdf2f8;border-left:6px solid var(--accent);padding:12px;border-radius:8px;margin:14px 0;font-size:15px;}
+.story{font-size:16px;line-height:1.6;margin-bottom:14px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;}
+.item{border:2px solid #fbcfe8;border-radius:10px;background:#fff;padding:10px;text-align:center;cursor:pointer;transition:.15s;}
+.item:hover{background:#fce7f3;border-color:#ec4899;transform:translateY(-2px);}
+.item.selected{background:#f9a8d4;border-color:#ec4899;box-shadow:0 4px 10px rgba(236,72,153,0.2);}
+.item .emoji{font-size:36px;}
+.item .price{font-size:13px;color:#475569;margin-top:4px;}
+.controls{display:flex;gap:10px;align-items:center;margin-top:16px;}
+.btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.secondary{background:#f1f5f9;color:var(--accent);}
+.result{display:none;margin-top:14px;padding:14px;border-radius:10px;background:#fdf2f8;border:2px solid #ec4899;}
+footer{text-align:center;margin-top:16px;color:#6b7280;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>💐 Flower Shop</h1>
+    <div class="muted">Attention & Orientation Test</div>
+
+    <div class="purpose">
+      <strong>Purpose of the Scene</strong><br>
+      This short test measures <b>attention</b>, <b>orientation</b>, and <b>judgment</b>.
+      It checks whether you can recognize that this store is irrelevant to your goal.
+      In early Alzheimer’s, people may get distracted by visually pleasing environments or forget their main task.
+    </div>
+
+    <div class="story">
+      You walk into the flower shop. The scent of roses and fresh soil fills the air.
+      Sunlight filters through the glass roof, lighting rows of colorful flowers.
+      They’re beautiful — but you pause and wonder, was this on your shopping list today?
+    </div>
+
+    <div class="grid" id="itemsGrid"></div>
+
+    <div class="controls">
+      <button class="btn primary" id="checkoutBtn">💐 Buy Selected</button>
+      <button class="btn secondary" id="exitBtn">🚪 Exit Shop</button>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+
+    <footer>This scene observes your focus and orientation in a non-task environment.</footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wallet=Number(localStorage.getItem('wallet'))||5000;
+  let cash=Number(localStorage.getItem('cashInHand'))||600;
+
+  const grid=document.getElementById('itemsGrid');
+  const resultBox=document.getElementById('resultBox');
+  const items=[
+    {name:"Roses",emoji:"🌹",price:80},
+    {name:"Tulips",emoji:"🌷",price:70},
+    {name:"Sunflowers",emoji:"🌻",price:90},
+    {name:"Daisies",emoji:"🌼",price:60},
+    {name:"Lilies",emoji:"🌺",price:100}
+  ];
+
+  let selected=[];
+  items.forEach((it,i)=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<div class="emoji">${it.emoji}</div><div><b>${it.name}</b></div><div class="price">₹${it.price}</div>`;
+    div.addEventListener('click',()=>{
+      const idx=selected.indexOf(i);
+      if(idx===-1){selected.push(i);div.classList.add('selected');}
+      else{selected.splice(idx,1);div.classList.remove('selected');}
+    });
+    grid.appendChild(div);
+  });
+
+  document.getElementById('checkoutBtn').addEventListener('click',()=>{
+    const chosen=selected.map(i=>items[i]);
+    const total=chosen.reduce((s,x)=>s+x.price,0);
+    if(total>cash){alert("⚠️ Not enough cash. ATM is outside the market.");return;}
+
+    // buying here = mild distraction
+    let score=0;
+    if(chosen.length>0)score=-0.5; else score=0.25; // small bonus if resisted buying
+    cash-=total;
+    localStorage.setItem('cashInHand',cash);
+
+    const result={
+      store:"flower",
+      chosen:chosen.map(x=>x.name),
+      spent:total,
+      score,
+      cashLeft:cash,
+      walletLeft:wallet,
+      time:new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('store_flower_result',JSON.stringify(result));
+
+    resultBox.style.display='block';
+    resultBox.innerHTML=`
+      <strong>Flower Shop Summary</strong><br>
+      💐 Items: ${chosen.map(x=>x.name).join(', ')||'None'}<br>
+      💰 Total Spent: ₹${total}<br>
+      🧮 Score Impact: ${score>=0?'+':''}${score}<br><br>
+      ${
+        chosen.length>0
+        ? 'You got distracted and bought flowers — a mild impulse action.'
+        : 'You admired the flowers but stayed focused. Excellent orientation.'
+      }
+    `;
+  });
+
+  document.getElementById('exitBtn').addEventListener('click',()=>{
+    const visited=JSON.parse(localStorage.getItem('visitedStores')||'[]');
+    if(!visited.includes('flower'))visited.push('flower');
+    localStorage.setItem('visitedStores',JSON.stringify(visited));
+    window.location.href='market_street.html';
+  });
+})();
+</script>
+</body>
+</html>

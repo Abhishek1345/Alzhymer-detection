@@ -3,6 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import './SpeechAnalyzer.css';
+import { saveTestProbability } from "./utils/ProbabilityManager";
 
 const sentences = {
   'en-US': [
@@ -126,6 +127,7 @@ export default function SpeechAnalyzer() {
     const probability = 100 - Math.max(0,
       100 - ((100 - pronunciationScore) * 0.5 + fillerCount * 3 + (100 - accuracy) * 0.5)
     );
+  saveTestProbability("speech", probability);
 
     const newResult = {
       accuracy: accuracy.toFixed(1),
