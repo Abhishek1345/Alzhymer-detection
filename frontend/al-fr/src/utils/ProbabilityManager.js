@@ -19,7 +19,7 @@ export function saveTestProbability(testName, value) {
       localStorage.setItem("overall_prob",JSON.stringify(arr));
     }
     else{
-    arr.push_back(value);
+    arr.push(value);
     localStorage.setItem("overall_prob",JSON.stringify(arr));
     let overall=(arr[0]+arr[1])/2;
     document.getElementById("overall_prob").innerHTML="Overall Alzheimer's Probability: "+overall.toFixed(4);
