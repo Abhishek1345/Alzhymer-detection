@@ -26,7 +26,9 @@ export default function App() {
         <SensorMonitor />
         
       </div>
-      <center><button className="nextPage" onClick={()=>{window.location.assign("https://alzhymer-detection-nitjsr-screening.onrender.com/")}}>Go To Cognitive Assesment ➡</button></center>
+      <center>
+        <p id="overall_prob"></p>
+        <button className="nextPage" onClick={()=>{window.location.assign("https://alzhymer-detection-nitjsr-screening.onrender.com/")}}>Go To Cognitive Assesment ➡</button></center>
     </div>
   );
 }

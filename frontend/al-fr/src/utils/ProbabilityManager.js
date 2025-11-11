@@ -6,10 +6,28 @@ export function saveTestProbability(testName, value) {
   existing[testName] = value;
   localStorage.setItem("alz_probs", JSON.stringify(existing));
    localStorage.setItem(testName+"_prob",value);
-
+   if(localStorage.getItem("overall_prob")==null){
+    let arr=[value];
+    localStorage.setItem("overall_prob",JSON.stringify(arr));
+    let overall=arr[0].toFixed(4);
+    document.getElementById("overall_prob").innerHTML="Overall Alzheimer's Probability: "+(overall);
+   }
+   else{
+    let arr=JSON.parse(localStorage.getItem("overall_prob"));
+    if(arr.length>=2){
+      arr=[value];
+      localStorage.setItem("overall_prob",JSON.stringify(arr));
+    }
+    else{
+    arr.push_back(value);
+    localStorage.setItem("overall_prob",JSON.stringify(arr));
+    let overall=(arr[0]+arr[1])/2;
+    document.getElementById("overall_prob").innerHTML="Overall Alzheimer's Probability: "+overall.toFixed(4);
+    }
+   }
   const vals = Object.values(existing);
   const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-
+  
 
   if (Object.keys(existing).length >= 3) {
     showOverallProbability(avg);
